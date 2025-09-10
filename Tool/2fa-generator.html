@@ -113,7 +113,7 @@
             const base32Regex = /^[A-Z2-7]+=*$/;
             if (!base32Regex.test(secret)) {
                 outputDiv.classList.add('hidden');
-                errorMessageP.textContent = 'Định dạng không hợp lệ. Chỉ dùng ký tự A-Z và 2-7.';
+                errorMessageP.textContent = 'Định dạng Secret Key không hợp lệ.';
                 return;
             }
 
@@ -180,6 +180,7 @@
     </script>
 </body>
 </html>
+
 
 
 
