@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Live GitHub by Kien Pham</title>
+    <script src="D:/MyTool/tailwindcss.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .result-box {
+            min-height: 200px;
+        }
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white antialiased">
+
+    <div class="container mx-auto px-4 py-8 md:py-12 max-w-4xl">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-100 mb-2">Check Live GitHub by Kiên Phạm</h1>
+            <p class="text-lg text-gray-400">Nhập danh sách tên người dùng để phân loại trạng thái "live" hoặc "die".</p>
+        </header>
+
+        <main>
+            <div class="bg-gray-800 p-6 rounded-lg shadow-lg mb-8">
+                <label for="usernames" class="block text-sm font-medium text-gray-300 mb-2">Danh sách Username (mỗi tên một dòng):</label>
+                <textarea id="usernames" rows="10" class="w-full bg-gray-900 text-gray-200 border border-gray-700 rounded-md p-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition duration-200" placeholder="abcxyz
+abcxyzz
+abcxyzzz
+abcxyzzzz
+..."></textarea>
+                <button id="checkButton" class="mt-4 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-md transition duration-300 ease-in-out flex items-center justify-center">
+                    <span id="buttonText">Kiểm tra</span>
+                    <div id="loader" class="loader hidden ml-3"></div>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Live Usernames -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                    <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-semibold text-green-400">✅ Username Live (<span id="liveCount">0</span>)</h2>
+                        <button id="copyLiveButton" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-1 px-3 rounded transition">Copy</button>
+                    </div>
+                    <div id="liveUsernames" class="result-box bg-gray-900 rounded-md p-3 border border-gray-700 space-y-2 overflow-y-auto">
+                        <!-- Kết quả sẽ được chèn vào đây -->
+                    </div>
+                </div>
+                
+                <!-- Die Usernames -->
+                <div class="bg-gray-800 p-6 rounded-lg shadow-lg">
+                     <div class="flex items-center justify-between mb-4">
+                        <h2 class="text-2xl font-semibold text-red-400">❌ Username Die (<span id="dieCount">0</span>)</h2>
+                        <button id="copyDieButton" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 font-semibold py-1 px-3 rounded transition">Copy</button>
+                    </div>
+                    <div id="dieUsernames" class="result-box bg-gray-900 rounded-md p-3 border border-gray-700 space-y-2 overflow-y-auto">
+                        <!-- Kết quả sẽ được chèn vào đây -->
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const usernamesTextarea = document.getElementById('usernames');
+        const checkButton = document.getElementById('checkButton');
+        const buttonText = document.getElementById('buttonText');
+        const loader = document.getElementById('loader');
+        
+        const liveUsernamesDiv = document.getElementById('liveUsernames');
+        const dieUsernamesDiv = document.getElementById('dieUsernames');
+        
+        const liveCountSpan = document.getElementById('liveCount');
+        const dieCountSpan = document.getElementById('dieCount');
+
+        const copyLiveButton = document.getElementById('copyLiveButton');
+        const copyDieButton = document.getElementById('copyDieButton');
+
+        let liveUsernamesArray = [];
+        let dieUsernamesArray = [];
+
+        /**
+         * Hàm sao chép văn bản vào clipboard và cung cấp phản hồi cho người dùng.
+         * @param {string} text - Văn bản cần sao chép.
+         * @param {HTMLElement} button - Nút đã được nhấn.
+         */
+        function copyToClipboard(text, button) {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'absolute';
+            textarea.style.left = '-9999px';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                // Sử dụng document.execCommand để tương thích tốt hơn
+                document.execCommand('copy');
+                const originalText = button.textContent;
+                button.textContent = 'Đã sao chép!';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            } catch (err) {
+                console.error('Không thể sao chép:', err);
+                alert('Rất tiếc, không thể sao chép văn bản.');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        copyLiveButton.addEventListener('click', () => {
+            if (liveUsernamesArray.length > 0) {
+                copyToClipboard(liveUsernamesArray.join('\n'), copyLiveButton);
+            }
+        });
+
+        copyDieButton.addEventListener('click', () => {
+            if (dieUsernamesArray.length > 0) {
+                copyToClipboard(dieUsernamesArray.join('\n'), copyDieButton);
+            }
+        });
+
+        /**
+         * Hàm kiểm tra một username có tồn tại hay không bằng cách thử tải ảnh đại diện của họ.
+         * Đây là một cách giải quyết để tránh các vấn đề về CORS khi fetch trực tiếp trang hồ sơ.
+         * @param {string} username - Tên người dùng GitHub cần kiểm tra.
+         * @returns {Promise<'live' | 'die'>} - Một promise giải quyết thành 'live' hoặc 'die'.
+         */
+        function checkUsernameStatus(username) {
+            return new Promise((resolve) => {
+                if (!username) {
+                    resolve('die'); // Coi như 'die' nếu username rỗng
+                    return;
+                }
+                const img = new Image();
+                img.onload = () => resolve('live');
+                img.onerror = () => resolve('die');
+                // Chúng ta thêm một tham số ngẫu nhiên để tránh cache của trình duyệt
+                img.src = `https://github.com/${username}.png?t=${new Date().getTime()}`;
+            });
+        }
+
+        /**
+         * Tạo một phần tử để hiển thị kết quả username.
+         * @param {string} username - Tên người dùng.
+         * @param {'live' | 'die'} status - Trạng thái của người dùng.
+         * @returns {HTMLElement} - Phần tử div đã được tạo.
+         */
+        function createResultElement(username, status) {
+            const div = document.createElement('div');
+            div.className = 'flex items-center justify-between p-2 bg-gray-700 rounded'; // Changed background for better contrast
+            
+            const span = document.createElement('span');
+            span.textContent = username;
+            span.className = status === 'live' ? 'text-green-300' : 'text-red-300';
+            
+            const link = document.createElement('a');
+            link.href = `https://github.com/${username}`;
+            link.target = '_blank';
+            link.textContent = 'Truy cập';
+            link.className = 'text-xs bg-gray-600 hover:bg-gray-500 text-gray-200 font-semibold py-1 px-2 rounded transition';
+            
+            div.appendChild(span);
+            if (status === 'live') {
+                div.appendChild(link);
+            }
+            
+            return div;
+        }
+
+        checkButton.addEventListener('click', async () => {
+            const usernames = usernamesTextarea.value.split('\n')
+                .map(u => u.trim())
+                .filter(u => u.length > 0);
+
+            if (usernames.length === 0) {
+                // Thay thế alert bằng một thông báo tinh tế hơn nếu có thể, nhưng alert là đủ dùng
+                alert('Vui lòng nhập ít nhất một username.');
+                return;
+            }
+
+            buttonText.textContent = 'Đang kiểm tra...';
+            loader.classList.remove('hidden');
+            checkButton.disabled = true;
+
+            // Xóa kết quả cũ và reset mảng dữ liệu
+            liveUsernamesDiv.innerHTML = '';
+            dieUsernamesDiv.innerHTML = '';
+            liveCountSpan.textContent = '0';
+            dieCountSpan.textContent = '0';
+            liveUsernamesArray = [];
+            dieUsernamesArray = [];
+
+            let liveCount = 0;
+            let dieCount = 0;
+
+            const promises = usernames.map(async (username) => {
+                const status = await checkUsernameStatus(username);
+                return { username, status };
+            });
+
+            const results = await Promise.all(promises);
+
+            results.forEach(({ username, status }) => {
+                const resultElement = createResultElement(username, status);
+                if (status === 'live') {
+                    liveUsernamesDiv.appendChild(resultElement);
+                    liveUsernamesArray.push(username); // Thêm vào mảng live
+                    liveCount++;
+                } else {
+                    dieUsernamesDiv.appendChild(resultElement);
+                    dieUsernamesArray.push(username); // Thêm vào mảng die
+                    dieCount++;
+                }
+            });
+
+            liveCountSpan.textContent = liveCount;
+            dieCountSpan.textContent = dieCount;
+
+            buttonText.textContent = 'Kiểm tra';
+            loader.classList.add('hidden');
+            checkButton.disabled = false;
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University of Southern California - Tuition Fee Receipt</title>
+    <script src="D:/MyTool/tailwindcss.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                -webkit-print-color-adjust: exact; /* For Chrome, Safari */
+                color-adjust: exact; /* For Firefox */
+            }
+            [contenteditable="true"] {
+                border: none;
+                outline: none;
+            }
+        }
+        /* Add a visual cue for editable elements */
+        [contenteditable="true"]:hover {
+            outline: 2px dashed #990000;
+            background-color: #fef2f2;
+            border-radius: 4px;
+        }
+         [contenteditable="true"]:focus {
+            outline: 2px solid #990000;
+            background-color: #fef2f2;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-4xl w-full mx-auto">
+        <!-- Control Buttons -->
+        <div class="flex justify-end items-center gap-4 mb-4 no-print">
+             <button onclick="randomizeData()" class="bg-gray-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                Randomize
+            </button>
+            <button onclick="printReceipt()" class="bg-[#990000] text-white font-bold py-2 px-5 rounded-lg hover:bg-[#7a0000] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#990000] focus:ring-opacity-50">
+                Print Receipt
+            </button>
+        </div>
+
+        <!-- Receipt Container -->
+        <div class="bg-white p-8 sm:p-10 lg:p-12 rounded-2xl shadow-lg border border-gray-200">
+            <!-- Header: University Logo and Address -->
+            <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-8 border-b border-gray-200">
+                <div class="flex items-center">
+                    <img src="https://logos-world.net/wp-content/uploads/2021/11/USC-Logo.png" alt="USC Logo" class="h-20 w-auto mr-6">
+                    <div>
+                        <h1 class="text-2xl lg:text-3xl font-bold text-gray-800">University of Southern California</h1>
+                        <p class="text-sm text-gray-500" contenteditable="true">Los Angeles, CA 90089, United States</p>
+                    </div>
+                </div>
+                <div class="mt-4 sm:mt-0 text-left sm:text-right">
+                    <h2 class="text-xl lg:text-2xl font-semibold text-[#990000]">Tuition Fee Receipt</h2>
+                    <p class="text-sm text-gray-500">Receipt #: <span contenteditable="true">2025-09-17-4581</span></p>
+                    <p class="text-sm text-gray-500">Date: <span contenteditable="true">September 17, 2025</span></p>
+                </div>
+            </header>
+
+            <!-- Student Information -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Billed To:</h3>
+                    <p id="student-name" class="text-gray-600"><span class="font-medium text-gray-600">Student Name: </span><span contenteditable="true">Andy Nguyen</span></p>
+                    <p id="student-dob" class="text-gray-500"><span class="font-medium text-gray-600">Date of Birth: </span><span contenteditable="true">August 15, 2005</span></p>
+                    <p id="student-address" class="text-gray-500" contenteditable="true">123 Trojan Way, Los Angeles, CA 90007</p>
+                    <p id="student-email" class="text-gray-500" contenteditable="true">andy.nguyen@usc.edu</p>
+                </div>
+                <div class="md:text-right">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Student Details:</h3>
+                    <p id="student-id" class="text-gray-500"><span class="font-medium text-gray-600">Student ID:</span> <span contenteditable="true">1234567890</span></p>
+                    <p id="student-program" class="text-gray-500"><span class="font-medium text-gray-600">Program:</span> <span contenteditable="true">M.S. in Computer Science</span></p>
+                    <p class="text-gray-500"><span class="font-medium text-gray-600">Academic Term:</span> <span contenteditable="true">Fall 2025</span></p>
+                </div>
+            </section>
+
+            <!-- Fee Details Table -->
+            <section class="mt-10">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Fee Breakdown:</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left rounded-lg overflow-hidden">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="p-4 text-sm font-semibold text-gray-600 tracking-wider">Description</th>
+                                <th class="p-4 text-sm font-semibold text-gray-600 tracking-wider text-right">Amount (USD)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Tuition Fee (12 units)</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">$31,680.00</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Student Health Service Fee</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">$550.00</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Student Programming Fee</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">$85.00</td>
+                            </tr>
+                             <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Transportation Fee</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">$120.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Totals Section -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-8">
+                <div class="flex items-center justify-center">
+                     <div class="text-center p-6 border-4 border-green-500 rounded-lg transform -rotate-12">
+                        <h3 class="text-3xl font-bold text-green-600 tracking-widest">PAID IN FULL</h3>
+                        <p class="text-green-500">Thank you for your payment!</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-gray-600">
+                        <p>Subtotal:</p>
+                        <p class="font-medium" id="subtotal-value">$32,435.00</p>
+                    </div>
+                    <div class="flex justify-between items-center text-blue-600">
+                        <p contenteditable="true">USC Merit Scholarship:</p>
+                        <p class="font-medium" id="scholarship-value" contenteditable="true">-$5,000.00</p>
+                    </div>
+                    <hr class="my-2 border-gray-200">
+                    <div class="flex justify-between items-center text-gray-800 font-bold text-xl">
+                        <p>Total Amount Due:</p>
+                        <p id="total-due-value">$27,435.00</p>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-600">
+                        <p>Payment Received (Credit Card):</p>
+                        <p class="font-medium" id="payment-received-value">$27,435.00</p>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+                        <p class="font-semibold text-gray-800">Balance Due:</p>
+                        <p class="font-bold text-lg text-green-600" id="balance-due-value">$0.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer & Print Button -->
+            <footer class="mt-12 text-center">
+                <p class="text-sm text-gray-500" contenteditable="true">This is an official receipt. If you have any questions, please contact the Student Financial Services office.</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function printReceipt() {
+            window.print();
+        }
+
+        function randomizeData() {
+            // Sample data arrays
+            const firstNames = ["Emily", "Michael", "Jessica", "Christopher", "Ashley", "Matthew", "Amanda", "David", "Sarah", "James", "Linda", "Robert", "Olivia", "Noah", "Emma", "Liam", "Sophia", "William", "Ava", "Mason", "Isabella", "Ethan"];
+            const lastNames = ["Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Taylor", "Anderson", "Thomas", "Jackson", "White", "Harris", "Martin", "Thompson", "Moore", "Clark"];
+            const streets = ["Figueroa St", "Sunset Blvd", "Wilshire Blvd", "Rodeo Dr", "Hoover St", "Jefferson Blvd", "Exposition Blvd", "Vermont Ave"];
+            const programs = [
+                "M.S. in Computer Science",
+                "M.S. in Electrical Engineering",
+                "M.S. in Business Analytics",
+                "Master of Business Administration (MBA)",
+                "M.S. in Mechanical Engineering",
+                "Master of Public Health (MPH)",
+                "M.A. in Cinematic Arts",
+                "Ph.D. in Clinical Psychology"
+            ];
+
+            // 1. Generate random data
+            const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const fullName = `${randomFirstName} ${randomLastName}`;
+            const randomStreetNum = Math.floor(Math.random() * 4000) + 100;
+            const randomStreet = streets[Math.floor(Math.random() * streets.length)];
+            const fullAddress = `${randomStreetNum} ${randomStreet}, Los Angeles, CA 90007`;
+            const email = `${randomFirstName.toLowerCase()}.${randomLastName.toLowerCase()}@usc.edu`;
+            const studentId = Math.floor(Math.random() * 9000000000) + 1000000000;
+            const randomProgram = programs[Math.floor(Math.random() * programs.length)];
+
+            // Generate random Date of Birth (student age between 18 and 25)
+            const currentYear = 2025;
+            const birthYear = Math.floor(Math.random() * 8) + (currentYear - 25);
+            const birthMonth = Math.floor(Math.random() * 12);
+            const birthDay = Math.floor(Math.random() * 28) + 1;
+            const birthDate = new Date(birthYear, birthMonth, birthDay);
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const formattedDob = `${monthNames[birthDate.getMonth()]} ${birthDate.getDate()}, ${birthDate.getFullYear()}`;
+
+            // 2. Update the DOM
+            document.getElementById('student-name').innerHTML = `<span class="font-medium text-gray-600">Student Name: </span><span contenteditable="true">${fullName}</span>`;
+            document.getElementById('student-address').textContent = fullAddress;
+            document.getElementById('student-email').textContent = email;
+            document.getElementById('student-id').innerHTML = `<span class="font-medium text-gray-600">Student ID:</span> <span contenteditable="true">${studentId}</span>`;
+            document.getElementById('student-program').innerHTML = `<span class="font-medium text-gray-600">Program:</span> <span contenteditable="true">${randomProgram}</span>`;
+            document.getElementById('student-dob').innerHTML = `<span class="font-medium text-gray-600">Date of Birth: </span><span contenteditable="true">${formattedDob}</span>`;
+        }
+        
+        // --- Calculation Logic ---
+
+        // Helper function to parse currency strings into numbers
+        function parseCurrency(value) {
+            if (typeof value !== 'string') return 0;
+            return parseFloat(value.replace(/[^0-9.-]+/g, "")) || 0;
+        }
+
+        // Helper function to format numbers into currency strings
+        function formatCurrency(number) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+            }).format(number);
+        }
+
+        // Main function to calculate and update all totals
+        function updateTotals() {
+            let subtotal = 0;
+            document.querySelectorAll('.fee-amount').forEach(cell => {
+                subtotal += parseCurrency(cell.textContent);
+            });
+
+            const scholarship = parseCurrency(document.getElementById('scholarship-value').textContent);
+            const totalDue = subtotal + scholarship; // Scholarship is negative, so adding is correct.
+
+            document.getElementById('subtotal-value').textContent = formatCurrency(subtotal);
+            document.getElementById('total-due-value').textContent = formatCurrency(totalDue);
+            document.getElementById('payment-received-value').textContent = formatCurrency(totalDue);
+            document.getElementById('balance-due-value').textContent = formatCurrency(0);
+        }
+
+        // Function to set up the event listeners
+        function setupEventListeners() {
+            const editableFields = document.querySelectorAll('.fee-amount, #scholarship-value');
+            editableFields.forEach(field => {
+                field.addEventListener('input', updateTotals);
+            });
+        }
+        
+        // On page load: randomize data, set up listeners, and run initial calculation
+        window.onload = function() {
+            randomizeData();
+            setupEventListeners();
+            updateTotals();
+        };
+
+    </script>
+</body>
+</html>
+
+

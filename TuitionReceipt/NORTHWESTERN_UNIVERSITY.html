@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuition Receipt - Northwestern University</title>
+    <script src="D:/MyTool/tailwindcss.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+            [contenteditable="true"] {
+                border: none !important;
+                background-color: transparent !important;
+            }
+        }
+        /* Styles for editable fields */
+        [contenteditable="true"] {
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 2px 4px;
+            margin: -2px -4px;
+            border-radius: 4px;
+            cursor: text;
+        }
+        [contenteditable="true"]:hover {
+             background-color: #f0f0f0;
+        }
+        [contenteditable="true"]:focus {
+            outline: none;
+            background-color: #f5f3ff;
+            box-shadow: 0 0 0 2px #8B5CF6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
+        <!-- Header with buttons -->
+        <div class="px-8 py-4 border-b border-gray-200 flex justify-between items-center no-print">
+            <h2 class="text-lg font-semibold text-gray-700">Receipt Preview</h2>
+            <div class="flex items-center space-x-2">
+                <button onclick="randomizeData()" class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Randomize
+                </button>
+                <button onclick="window.print()" class="px-4 py-2 bg-purple-700 text-white text-sm font-medium rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600">
+                    Print Receipt
+                </button>
+            </div>
+        </div>
+
+        <!-- Receipt Content -->
+        <div class="print-area p-8 sm:p-12">
+            <!-- University Header -->
+            <header class="flex justify-between items-start mb-10">
+                <div>
+                    <h1 class="text-2xl font-bold text-purple-800 tracking-wider mb-2">NORTHWESTERN UNIVERSITY</h1>
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Northwestern_University_seal.svg/1200px-Northwestern_University_seal.svg.png" alt="Northwestern University Logo" class="h-24 sm:h-32 w-auto object-contain">
+                     <p class="text-sm text-gray-500 mt-2">633 Clark Street, Evanston, IL 60208</p>
+                </div>
+                <div class="text-right">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 uppercase">Tuition Receipt</h1>
+                    <p class="text-sm text-gray-500 mt-1">Receipt #: <span id="receipt-no" contenteditable="true"></span></p>
+                </div>
+            </header>
+
+            <!-- Student and Receipt Info -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-10">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">BILL TO</h3>
+                    <p id="student-name" contenteditable="true" class="font-bold text-gray-900"></p>
+                    <p class="text-gray-600"><strong class="font-semibold text-gray-800">Student ID:</strong> <span id="student-id-value" contenteditable="true"></span></p>
+                    <p class="text-gray-600"><strong class="font-semibold text-gray-800">Date of Birth:</strong> <span id="student-dob-value" contenteditable="true"></span></p>
+                    <p id="student-address" contenteditable="true" class="text-gray-600 mt-2"></p>
+                    <p class="text-gray-600"><strong class="font-semibold text-gray-800">Email:</strong> <span id="student-email-value" contenteditable="true"></span></p>
+                    <p class="font-medium text-gray-700 mt-2"><strong class="font-semibold text-gray-800">Program:</strong> <span id="student-program-value" contenteditable="true"></span></p>
+                </div>
+                <div class="text-left sm:text-right">
+                    <div class="mb-2">
+                        <span class="font-semibold text-gray-600">Issue Date:</span>
+                        <span id="issue-date" contenteditable="true" class="text-gray-800"></span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="font-semibold text-gray-600">Payment Date:</span>
+                        <span id="payment-date" contenteditable="true" class="text-gray-800"></span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-600">Academic Term:</span>
+                        <span id="academic-term" contenteditable="true" class="text-gray-800"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fees Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Amount</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fees-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Rows will be injected by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="flex justify-end mt-8">
+                <div class="w-full sm:w-1/2 md:w-2/5">
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Subtotal</span>
+                            <span id="subtotal" class="text-gray-800 font-medium"></span>
+                        </div>
+                        <div class="flex justify-between text-green-600">
+                            <span id="scholarship-name" contenteditable="true"></span>
+                            <span id="scholarship-amount" contenteditable="true" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span class="text-gray-600 font-semibold">Total Due</span>
+                            <span id="total-due" class="text-gray-900 font-semibold"></span>
+                        </div>
+                         <div class="flex justify-between">
+                            <span class="text-gray-600">Amount Paid</span>
+                            <span id="amount-paid" class="text-gray-800 font-medium"></span>
+                        </div>
+                        <div class="flex justify-between bg-purple-100 p-3 rounded-lg">
+                            <span class="text-purple-800 font-bold text-lg">Balance Due</span>
+                            <span id="balance-due" class="text-purple-800 font-bold text-lg">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paid Stamp -->
+            <div class="mt-12 text-center relative">
+                 <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="border-4 border-green-500 text-green-500 rounded-lg p-4 rotate-[-15deg] opacity-75">
+                        <h2 class="text-5xl sm:text-6xl font-black uppercase tracking-widest">PAID</h2>
+                    </div>
+                </div>
+            </div>
+             
+             <!-- Footer -->
+            <footer class="mt-24 pt-8 border-t text-center text-gray-500 text-sm">
+                <p>Thank you for your payment!</p>
+                <p>For any questions, please contact the Student Finance office at <a href="mailto:studentfinance@northwestern.edu" class="text-purple-700 hover:underline">studentfinance@northwestern.edu</a>.</p>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        const firstNames = ["John", "Emily", "Michael", "Sarah", "David", "Jessica", "Christopher", "Ashley", "James", "Amanda", "Robert", "Jennifer", "William", "Melissa", "Daniel", "Stephanie", "Joseph", "Nicole", "Matthew", "Elizabeth", "Anthony", "Heather", "Joshua", "Tiffany", "Andrew", "Kimberly", "Brian", "Michelle", "Kevin", "Crystal", "Thomas", "Amber", "Richard", "Megan", "Charles", "Christina", "Paul", "Rachel", "Mark", "Laura", "Steven", "Rebecca", "Edward", "Lauren", "Jason", "Samantha", "Jeffrey", "Amy", "Ryan", "Danielle"];
+        const lastNames = ["Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez", "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin", "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson", "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores", "Green", "Adams", "Nelson", "Baker", "Hall", "Campbell", "Mitchell", "Carter"];
+        const addresses = ["123 University Ave, Evanston, IL 60201", "456 College St, Chicago, IL 60611", "789 Campus Dr, Evanston, IL 60208", "101 Oak Ln, Wilmette, IL 60091"];
+        const scholarshipTypes = ["Presidential Scholarship", "Dean's Merit Scholarship", "Wildcat Academic Grant", "Founder's Scholarship"];
+        const programs = ["B.S. in Computer Science", "M.S. in Journalism", "B.A. in Economics", "Ph.D. in Chemical Engineering", "M.A. in Integrated Marketing Communications"];
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount);
+        }
+
+        function parseCurrency(currencyString) {
+            if (typeof currencyString !== 'string') return 0;
+            const number = parseFloat(currencyString.replace(/[^0-9.-]+/g, ""));
+            return isNaN(number) ? 0 : number;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        
+        function getRandomNumber(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function updateSummary() {
+            let subtotal = 0;
+            const feeElements = document.querySelectorAll('.fee-amount');
+            feeElements.forEach(el => {
+                subtotal += parseCurrency(el.textContent);
+            });
+
+            const scholarshipEl = document.getElementById('scholarship-amount');
+            const scholarshipAmount = parseCurrency(scholarshipEl.textContent);
+            const effectiveScholarship = scholarshipAmount > 0 ? -scholarshipAmount : scholarshipAmount;
+
+            const totalDue = subtotal + effectiveScholarship;
+
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('total-due').textContent = formatCurrency(totalDue);
+            document.getElementById('amount-paid').textContent = formatCurrency(totalDue);
+
+            // Ensure the scholarship amount is displayed with a negative sign
+            if (scholarshipEl.textContent.trim() !== '' && !scholarshipEl.textContent.startsWith('-')) {
+                 scholarshipEl.textContent = `-${formatCurrency(Math.abs(scholarshipAmount)).substring(1)}`;
+            }
+        }
+
+        function randomizeData() {
+            // Random Payment Date
+            const startDate = new Date('2025-08-01T00:00:00');
+            const endDate = new Date('2025-09-10T23:59:59');
+            const randomPaymentDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
+            document.getElementById('payment-date').textContent = formatDate(randomPaymentDate);
+
+            // Basic Info
+            document.getElementById('receipt-no').textContent = `NU-${Math.floor(100000 + Math.random() * 900000)}`;
+            document.getElementById('academic-term').textContent = "Fall 2025";
+            
+            // Student Info
+            const firstName = getRandomItem(firstNames);
+            const lastName = getRandomItem(lastNames);
+            const studentName = `${firstName} ${lastName}`;
+            document.getElementById('student-name').textContent = studentName;
+            
+            const email = `${firstName.toLowerCase()}.${lastName.toLowerCase()}@northwestern.edu`;
+            document.getElementById('student-email-value').textContent = email;
+
+            const currentYear = new Date().getFullYear();
+            const birthYear = currentYear - (18 + Math.floor(Math.random() * 6));
+            const birthMonth = Math.floor(Math.random() * 12);
+            const birthDay = Math.floor(Math.random() * 28) + 1;
+            const dob = new Date(birthYear, birthMonth, birthDay);
+            document.getElementById('student-dob-value').textContent = formatDate(dob);
+
+            document.getElementById('student-id-value').textContent = `NOU${Math.floor(10000000 + Math.random() * 90000000)}`;
+            document.getElementById('student-address').textContent = getRandomItem(addresses);
+            document.getElementById('student-program-value').textContent = getRandomItem(programs);
+
+            // Fees
+            const fees = [
+                { name: `${document.getElementById('academic-term').textContent} Tuition`, amount: getRandomNumber(28000, 35000) },
+                { name: 'Technology Fee', amount: getRandomNumber(250, 400) },
+                { name: 'Health Service Fee', amount: getRandomNumber(300, 500) },
+                { name: 'Activity Fee', amount: getRandomNumber(100, 150) },
+            ];
+            
+            const feesBody = document.getElementById('fees-body');
+            feesBody.innerHTML = ''; 
+            
+            fees.forEach(fee => {
+                const row = `
+                    <tr>
+                        <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${fee.name}</td>
+                        <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right fee-amount">${formatCurrency(fee.amount)}</td>
+                    </tr>
+                `;
+                feesBody.innerHTML += row;
+            });
+            
+            const scholarshipName = getRandomItem(scholarshipTypes);
+            const subtotalForScholarship = fees.reduce((acc, fee) => acc + fee.amount, 0);
+            const scholarshipAmount = subtotalForScholarship * getRandomNumber(0.15, 0.40);
+
+            document.getElementById('scholarship-name').textContent = scholarshipName;
+            document.getElementById('scholarship-amount').textContent = `-${formatCurrency(scholarshipAmount)}`;
+            
+            // Initial calculation
+            updateSummary();
+        }
+
+        function initializeReceipt() {
+            document.getElementById('issue-date').textContent = formatDate(new Date('2025-08-15T00:00:00'));
+            randomizeData();
+            
+            const container = document.querySelector('.print-area');
+            container.addEventListener('input', function(event) {
+                const target = event.target;
+                if (target.classList.contains('fee-amount') || target.id === 'scholarship-amount') {
+                    // Use a short timeout to allow the DOM to update before recalculating
+                    setTimeout(updateSummary, 0);
+                }
+            });
+        }
+
+        window.onload = initializeReceipt;
+    </script>
+</body>
+</html>
+

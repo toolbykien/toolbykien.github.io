@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tool By Kiên Phạm</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
+    <!-- Tích hợp Tailwind CSS -->
+    <script src="./tailwindcss.js"></script>
+    <!-- Tích hợp Font Inter từ Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Thư viện kéo thả SortableJS -->
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0D1117;
+            background-image: radial-gradient(ellipse 80% 80% at 50% -20%,rgba(120,119,198,0.15),rgba(255,255,255,0));
+        }
+        /* CSS cho thanh thời gian của trình tạo 2FA */
+        #progressBar {
+            transition: width 1s linear;
+        }
+        
+        /* === HIỆU ỨNG KÉO THẢ MỚI === */
+        .link-item {
+            /* Thêm transition để các mục khác di chuyển mượt mà khi sắp xếp */
+            transition: transform 0.2s ease-in-out;
+        }
+        .sortable-ghost {
+            /* Kiểu cho vị trí trống (placeholder) */
+            opacity: 1;
+            background-color: rgba(71, 85, 105, 0.3); /* Màu nền mờ */
+            border: 2px dashed #4f46e5; /* Viền đứt nét màu indigo */
+            border-radius: 0.75rem; /* bo góc */
+        }
+        .sortable-ghost > * {
+            /* Ẩn nội dung của placeholder để chỉ hiện khung */
+            visibility: hidden;
+        }
+        .sortable-drag {
+            /* Kiểu cho mục đang được kéo */
+            opacity: 0.95;
+            transform: rotate(1.5deg) scale(1.02); /* Hơi nghiêng và phóng to */
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3); /* Đổ bóng */
+            background-color: #334155; /* slate-700 */
+            cursor: grabbing;
+        }
+        .drag-handle {
+            cursor: grab;
+        }
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex items-center justify-center p-4">
+
+    <!-- Toast Notification -->
+    <div id="toast-notification" class="fixed top-5 right-5 bg-green-600 text-white py-3 px-6 rounded-lg shadow-lg transform translate-x-[calc(100%+1.25rem)] transition-transform duration-500 ease-in-out z-50 flex items-center gap-3">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+        <p id="toast-message">Thao tác thành công!</p>
+    </div>
+
+    <!-- Thông báo lỗi cấu hình -->
+    <div id="config-warning" class="hidden fixed top-0 left-0 right-0 bg-red-600 p-4 text-center text-white z-50 font-semibold">
+        <strong>Lỗi Cấu hình Firebase!</strong> Bạn cần dán đối tượng <code>firebaseConfig</code> của mình vào tệp <code>index.html</code> để ứng dụng hoạt động.
+    </div>
+
+    <div class="w-full max-w-4xl mx-auto">
+        <h1 class="text-5xl md:text-6xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse">
+            Tool By Kiên Phạm
+        </h1>
+
+        <div class="flex justify-end mb-4">
+            <!-- Nút mở modal 2FA -->
+            <button id="open-2fa-modal-btn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300 transform hover:-translate-y-1" style="margin-right: 10px;">
+                🔑 Trình tạo mã 2FA
+            </button>
+
+            <button id="add-new-btn" class="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300 transform hover:-translate-y-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" /></svg>
+                Thêm liên kết
+            </button>
+        </div>
+
+        <div class="bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl shadow-purple-500/10 overflow-hidden border border-slate-700">
+            <div class="grid grid-cols-[1fr_auto] gap-4 px-6 py-4 border-b border-slate-700">
+                <h2 class="text-sm font-bold uppercase text-gray-400 tracking-wider">Tên</h2>
+                <h2 class="text-sm font-bold uppercase text-gray-400 tracking-wider text-right pr-20">Hành động</h2>
+            </div>
+            
+            <div id="link-list" class="p-2 flex flex-col gap-2">
+                <!-- Dữ liệu từ Firebase sẽ được render ở đây -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal cho việc Thêm/Sửa liên kết -->
+    <div id="form-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 pointer-events-none transition-opacity duration-300 ease-out">
+        <div class="modal-content bg-slate-800 border border-slate-700 rounded-2xl shadow-xl w-full max-w-md p-6 opacity-0 scale-95 transition-all duration-300 ease-out">
+            <h2 id="modal-title" class="text-2xl font-bold mb-6">Thêm liên kết mới</h2>
+            <form id="link-form">
+                <input type="hidden" id="edit-id">
+                <div class="mb-4">
+                    <label for="link-name" class="block text-sm font-medium text-gray-300 mb-2">Tên</label>
+                    <input type="text" id="link-name" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" required>
+                </div>
+                <div class="mb-4">
+                    <label for="link-url" class="block text-sm font-medium text-gray-300 mb-2">URL</label>
+                    <input type="url" id="link-url" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-purple-500" placeholder="https://example.com" required>
+                </div>
+                 <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-300 mb-2">Màu nút</label>
+                    <div id="color-picker" class="flex flex-wrap gap-3"></div>
+                    <input type="hidden" id="link-color" value="0">
+                </div>
+                <div class="flex justify-end gap-4">
+                    <button type="button" id="cancel-btn" class="bg-slate-600 hover:bg-slate-700 text-white font-semibold py-2 px-5 rounded-lg transition-all duration-200 transform hover:-translate-y-1">Hủy</button>
+                    <button type="submit" class="bg-purple-600 hover:bg-purple-700 text-white font-semibold py-2 px-5 rounded-lg transition-all duration-200 transform hover:-translate-y-1">Lưu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Modal xác nhận Xóa -->
+    <div id="confirm-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 pointer-events-none transition-opacity duration-300 ease-out">
+        <div class="modal-content bg-slate-800 border border-slate-700 rounded-2xl shadow-xl w-full max-w-sm p-6 text-center opacity-0 scale-95 transition-all duration-300 ease-out">
+            <h2 class="text-xl font-bold mb-4">Bạn có chắc chắn muốn xóa?</h2>
+            <p class="text-gray-400 mb-6">Hành động này không thể hoàn tác.</p>
+            <div class="flex justify-center gap-4">
+                <button type="button" id="cancel-delete-btn" class="bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 transform hover:-translate-y-1">Hủy</button>
+                <button type="button" id="confirm-delete-btn" class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg transition-all duration-200 transform hover:-translate-y-1">Xóa</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Modal cho Trình tạo 2FA -->
+    <div id="2fa-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 hidden opacity-0 pointer-events-none transition-opacity duration-300 ease-out">
+        <div class="modal-content w-full max-w-md bg-slate-800 border border-slate-700 rounded-2xl shadow-xl p-6 md:p-8 space-y-6 relative opacity-0 scale-95 transition-all duration-300 ease-out">
+             <button id="close-2fa-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-white transition-colors z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+            <div class="text-center">
+                <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Trình tạo mã 2FA</h1>
+                 <p class="text-gray-400 mt-1">Tạo mã TOTP từ khóa bí mật của bạn.</p>
+            </div>
+            <div class="space-y-4">
+                <div>
+                    <label for="secretKey" class="block mb-2 text-sm font-medium text-gray-300">Nhập mã bí mật (Secret Key)</label>
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                        </div>
+                        <input type="text" id="secretKey" class="w-full bg-slate-700 border border-slate-600 rounded-lg px-3 py-2 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-purple-500 pl-10" placeholder="Chỉ chứa A-Z và 2-7" required>
+                    </div>
+                </div>
+            </div>
+            <div id="output" class="space-y-4 pt-4 text-center hidden">
+                <div class="relative">
+                    <p id="otpCode" class="text-5xl font-mono tracking-widest text-white bg-slate-900/70 rounded-lg py-4 cursor-pointer transition-all duration-300 hover:bg-slate-900 hover:scale-105" title="Nhấp để sao chép">
+                        ------
+                    </p>
+                    <span id="copyFeedback" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-semibold text-gray-900 bg-cyan-300 px-4 py-2 rounded-md hidden pointer-events-none shadow-lg">Đã sao chép!</span>
+                </div>
+                <div class="w-full bg-slate-700 rounded-full h-2.5">
+                    <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-cyan-500 h-2.5 rounded-full"></div>
+                </div>
+                <p class="text-sm text-gray-400">Mã mới sau <span id="timeLeft" class="font-medium text-white">30</span> giây</p>
+            </div>
+            <p id="errorMessage" class="text-center text-red-400 font-medium h-5"></p>
+            <p class="text-xs text-gray-500 mt-4 text-center">
+                Create by Kiên Phạm. <a href="file:///D:/MyTool/Tool/2fa-generator.html" target="_blank" class="text-indigo-400 hover:underline">Link Here</a>
+            </p>
+        </div>
+    </div>
+
+    <!-- Thư viện tạo mã 2FA -->
+    <script src="./otpauth.umd.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script type="module">
+        // Import functions from the SDKs
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
+
+        // =================================================================================
+        // === Cấu hình Firebase của bạn                                                ===
+        // =================================================================================
+        const firebaseConfig = {
+            apiKey: "AIzaSyA5CLvzE7tX-8CqJRkG7T15wKH9cBv12Kg",
+            authDomain: "mytool-8c2a9.firebaseapp.com",
+            projectId: "mytool-8c2a9",
+            storageBucket: "mytool-8c2a9.appspot.com",
+            messagingSenderId: "734132825984",
+            appId: "1:734132825984:web:c37161b1850b5c3afc1b65"
+        };
+        // =================================================================================
+
+        if (!firebaseConfig.projectId || firebaseConfig.projectId.includes("YOUR_PROJECT")) {
+            document.getElementById('config-warning').classList.remove('hidden');
+        } else {
+            const app = initializeApp(firebaseConfig);
+            const db = getFirestore(app);
+            const linksCollection = collection(db, "links");
+
+            document.addEventListener('DOMContentLoaded', () => {
+                const animationDuration = 300; // ms, phải khớp với class duration-300 của Tailwind
+
+                // === LOGIC MODAL CHUNG ===
+                function openModal(modal) {
+                    if (!modal) return;
+                    const modalContent = modal.querySelector('.modal-content');
+                    modal.classList.remove('hidden');
+                    setTimeout(() => {
+                        modal.classList.remove('opacity-0', 'pointer-events-none');
+                        if (modalContent) {
+                            modalContent.classList.remove('opacity-0', 'scale-95');
+                        }
+                    }, 10);
+                }
+
+                function closeModal(modal) {
+                    if (!modal) return;
+                    const modalContent = modal.querySelector('.modal-content');
+                    modal.classList.add('opacity-0', 'pointer-events-none');
+                    if (modalContent) {
+                        modalContent.classList.add('opacity-0', 'scale-95');
+                    }
+                    setTimeout(() => {
+                        modal.classList.add('hidden');
+                    }, animationDuration);
+                }
+
+                // === LOGIC QUẢN LÝ LIÊN KẾT ===
+                let idToDelete = null;
+                let localLinks = []; // Biến cục bộ để lưu trữ danh sách link và thứ tự
+                let sortableInstance = null;
+                const toastNotification = document.getElementById('toast-notification');
+                const toastMessage = document.getElementById('toast-message');
+                const colorSchemes = [
+                    { base: 'from-blue-500 to-purple-600', hover: 'hover:from-blue-600 hover:to-purple-700', shadow: 'group-hover:shadow-purple-500/30' },
+                    { base: 'from-green-400 to-cyan-500', hover: 'hover:from-green-500 hover:to-cyan-600', shadow: 'group-hover:shadow-cyan-500/30' },
+                    { base: 'from-pink-500 to-orange-500', hover: 'hover:from-pink-600 hover:to-orange-600', shadow: 'group-hover:shadow-orange-500/30' },
+                    { base: 'from-red-500 to-yellow-500', hover: 'hover:from-red-600 hover:to-yellow-600', shadow: 'group-hover:shadow-yellow-500/30' },
+                    { base: 'from-teal-400 to-sky-500', hover: 'hover:from-teal-500 hover:to-sky-600', shadow: 'group-hover:shadow-sky-500/30' },
+                    { base: 'from-indigo-500 to-violet-500', hover: 'hover:from-indigo-600 hover:to-violet-600', shadow: 'group-hover:shadow-violet-500/30' },
+                    { base: 'from-lime-400 to-emerald-500', hover: 'hover:from-lime-500 hover:to-emerald-600', shadow: 'group-hover:shadow-emerald-500/30' },
+                    { base: 'from-rose-400 to-red-500', hover: 'hover:from-rose-500 hover:to-red-600', shadow: 'group-hover:shadow-red-500/30' },
+                    { base: 'from-amber-400 to-orange-500', hover: 'hover:from-amber-500 hover:to-orange-600', shadow: 'group-hover:shadow-orange-500/30' },
+                    { base: 'from-fuchsia-500 to-pink-600', hover: 'hover:from-fuchsia-600 hover:to-pink-700', shadow: 'group-hover:shadow-pink-500/30' },
+                    { base: 'from-slate-500 to-gray-600', hover: 'hover:from-slate-600 hover:to-gray-700', shadow: 'group-hover:shadow-gray-500/30' },
+                    { base: 'from-zinc-400 to-neutral-500', hover: 'hover:from-zinc-500 hover:to-neutral-600', shadow: 'group-hover:shadow-neutral-500/30' },
+                    { base: 'from-stone-500 to-gray-500', hover: 'hover:from-stone-600 hover:to-gray-600', shadow: 'group-hover:shadow-gray-500/30' },
+                    { base: 'from-cyan-300 to-sky-400', hover: 'hover:from-cyan-400 hover:to-sky-500', shadow: 'group-hover:shadow-sky-500/30' },
+                    { base: 'from-blue-600 to-indigo-700', hover: 'hover:from-blue-700 hover:to-indigo-800', shadow: 'group-hover:shadow-indigo-500/30' },
+                    { base: 'from-violet-600 to-purple-700', hover: 'hover:from-violet-700 hover:to-purple-800', shadow: 'group-hover:shadow-purple-500/30' },
+                    { base: 'from-fuchsia-600 to-rose-500', hover: 'hover:from-fuchsia-700 hover:to-rose-600', shadow: 'group-hover:shadow-rose-500/30' },
+                    { base: 'from-pink-500 to-red-600', hover: 'hover:from-pink-600 hover:to-red-700', shadow: 'group-hover:shadow-red-500/30' }
+                ];
+                let linkListContainer = document.getElementById('link-list');
+                const formModal = document.getElementById('form-modal');
+                const confirmModal = document.getElementById('confirm-modal');
+                const addNewBtn = document.getElementById('add-new-btn');
+                const modalTitle = document.getElementById('modal-title');
+                const linkForm = document.getElementById('link-form');
+                const cancelBtn = document.getElementById('cancel-btn');
+                const editIdInput = document.getElementById('edit-id');
+                const linkNameInput = document.getElementById('link-name');
+                const linkUrlInput = document.getElementById('link-url');
+                const linkColorInput = document.getElementById('link-color');
+                const colorPickerContainer = document.getElementById('color-picker');
+                const cancelDeleteBtn = document.getElementById('cancel-delete-btn');
+                const confirmDeleteBtn = document.getElementById('confirm-delete-btn');
+                
+                function showToast(message) {
+                    toastMessage.textContent = message;
+                    toastNotification.classList.remove('translate-x-[calc(100%+1.25rem)]');
+                    setTimeout(() => {
+                        toastNotification.classList.add('translate-x-[calc(100%+1.25rem)]');
+                    }, 3000);
+                }
+                
+                // Sắp xếp theo trường 'position'
+                const q = query(linksCollection, orderBy("position", "asc"));
+
+                onSnapshot(q, (snapshot) => {
+                    localLinks = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    renderLinks(localLinks);
+                    initSortable();
+                }, (error) => {
+                    console.error("Error listening to collection: ", error);
+                    if (error.code === 'failed-precondition') {
+                        alert("Lỗi Firestore: Cần phải tạo một chỉ mục (index) cho trường 'position'. Vui lòng kiểm tra Console (F12), tìm lỗi và nhấp vào link Firebase cung cấp để tạo chỉ mục tự động, sau đó tải lại trang.");
+                    }
+                });
+
+                function renderLinks(links) {
+                    linkListContainer.innerHTML = '';
+                    if (!links || links.length === 0) {
+                        linkListContainer.innerHTML = `<p class="text-center text-gray-400 p-8">Chưa có liên kết nào. Hãy thêm một cái!</p>`;
+                        return;
+                    }
+                    links.forEach((link) => {
+                        const row = document.createElement('div');
+                        row.className = 'link-item group grid grid-cols-[1fr_auto] gap-4 items-center px-4 py-4 hover:bg-slate-700/60 transition-all duration-300 ease-in-out rounded-xl';
+                        row.dataset.id = link.id;
+                        
+                        const scheme = colorSchemes[link.color || 0];
+                        row.innerHTML = `
+                            <p class="font-medium text-lg text-gray-200 truncate">${link.name}</p>
+                            <div class="flex items-center gap-4">
+                                <a href="${link.url}" target="_blank" class="action-button flex items-center gap-2 bg-gradient-to-r ${scheme.base} ${scheme.hover} text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-lg ${scheme.shadow}">
+                                    Truy cập
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
+                                </a>
+                                <div class="flex items-center gap-1 bg-slate-700/50 rounded-lg p-1">
+                                    <button class="edit-btn p-2 rounded-md hover:bg-slate-600 transition-colors" data-id="${link.id}" data-name="${link.name}" data-url="${link.url}" data-color="${link.color || 0}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                    <button class="delete-btn p-2 rounded-md hover:bg-slate-600 transition-colors" data-id="${link.id}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                    </button>
+                                    <div class="drag-handle text-gray-400 hover:text-white p-2">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+                                        </svg>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                        linkListContainer.appendChild(row);
+                    });
+                    attachActionListeners();
+                }
+
+                function initSortable() {
+                    if (sortableInstance) {
+                        sortableInstance.destroy();
+                    }
+                    sortableInstance = new Sortable(linkListContainer, {
+                        handle: '.drag-handle', // Phần tử để kéo
+                        animation: 200, // Tăng thời gian animation để mượt hơn
+                        ghostClass: 'sortable-ghost', // Class cho placeholder
+                        dragClass: 'sortable-drag', // Class cho mục đang được kéo
+                        onEnd: async (evt) => {
+                            const items = linkListContainer.querySelectorAll('.link-item');
+                            const batch = writeBatch(db);
+                            items.forEach((item, index) => {
+                                const docId = item.dataset.id;
+                                const docRef = doc(db, "links", docId);
+                                batch.update(docRef, { position: index });
+                            });
+                            try {
+                                await batch.commit();
+                                showToast("Đã cập nhật thứ tự!");
+                            } catch (e) {
+                                console.error("Lỗi khi cập nhật thứ tự: ", e);
+                                alert("Không thể cập nhật thứ tự.");
+                            }
+                        },
+                    });
+                }
+                
+                function populateColorPicker() {
+                    colorPickerContainer.innerHTML = '';
+                    colorSchemes.forEach((scheme, index) => {
+                        const swatch = document.createElement('div');
+                        swatch.className = `w-8 h-8 rounded-full cursor-pointer bg-gradient-to-r ${scheme.base} transition-all duration-200 hover:scale-110 ring-2 ring-transparent`;
+                        swatch.dataset.colorIndex = index;
+                        colorPickerContainer.appendChild(swatch);
+                    });
+                }
+
+                function updateSelectedColorVisual(selectedIndex) {
+                    Array.from(colorPickerContainer.children).forEach((child, index) => {
+                        child.classList.toggle('ring-white', index == selectedIndex);
+                        child.classList.toggle('scale-110', index == selectedIndex);
+                        child.classList.toggle('ring-transparent', index != selectedIndex);
+                    });
+                    linkColorInput.value = selectedIndex;
+                }
+
+                function openLinkFormModal(link = null) {
+                    linkForm.reset();
+                    if (link) {
+                        modalTitle.textContent = 'Sửa liên kết';
+                        editIdInput.value = link.id;
+                        linkNameInput.value = link.name;
+                        linkUrlInput.value = link.url;
+                        updateSelectedColorVisual(link.color || 0);
+                    } else {
+                        modalTitle.textContent = 'Thêm liên kết mới';
+                        editIdInput.value = '';
+                        updateSelectedColorVisual(0);
+                    }
+                    openModal(formModal);
+                }
+
+                function closeLinkFormModal() {
+                    closeModal(formModal);
+                }
+                
+                function openConfirmModal(id) {
+                    idToDelete = id;
+                    openModal(confirmModal);
+                }
+
+                function closeConfirmModal() {
+                    idToDelete = null;
+                    closeModal(confirmModal);
+                }
+
+                function attachActionListeners() {
+                    linkListContainer.addEventListener('click', (e) => {
+                        const editBtn = e.target.closest('.edit-btn');
+                        const deleteBtn = e.target.closest('.delete-btn');
+
+                        if (editBtn) {
+                            const linkData = {
+                                id: editBtn.dataset.id,
+                                name: editBtn.dataset.name,
+                                url: editBtn.dataset.url,
+                                color: parseInt(editBtn.dataset.color, 10)
+                            };
+                            openLinkFormModal(linkData);
+                        }
+
+                        if (deleteBtn) {
+                            openConfirmModal(deleteBtn.dataset.id);
+                        }
+                    });
+                }
+
+                linkForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const linkData = {
+                        name: linkNameInput.value,
+                        url: linkUrlInput.value,
+                        color: parseInt(linkColorInput.value, 10)
+                    };
+                    const id = editIdInput.value;
+
+                    try {
+                        if (id) {
+                            await updateDoc(doc(db, "links", id), linkData);
+                            showToast("Cập nhật thành công!");
+                        } else {
+                            // Gán vị trí cho liên kết mới
+                            linkData.position = localLinks.length;
+                            linkData.createdAt = serverTimestamp();
+                            await addDoc(linksCollection, linkData);
+                            showToast("Thêm thành công!");
+                        }
+                        closeLinkFormModal();
+                    } catch (error) {
+                        console.error("Error saving link: ", error);
+                        alert("Đã xảy ra lỗi khi lưu!");
+                    }
+                });
+
+                confirmDeleteBtn.addEventListener('click', async () => {
+                    if (idToDelete) {
+                        try {
+                            await deleteDoc(doc(db, "links", idToDelete));
+                            showToast("Xóa thành công!");
+                        } catch(e) {
+                            console.error("Error deleting: ", e);
+                            alert("Lỗi khi xóa!");
+                        } finally {
+                            closeConfirmModal();
+                        }
+                    }
+                });
+                
+                colorPickerContainer.addEventListener('click', (e) => {
+                    if (e.target.dataset.colorIndex !== undefined) {
+                        updateSelectedColorVisual(e.target.dataset.colorIndex);
+                    }
+                });
+                addNewBtn.addEventListener('click', () => openLinkFormModal());
+                cancelBtn.addEventListener('click', closeLinkFormModal);
+                cancelDeleteBtn.addEventListener('click', closeConfirmModal);
+                populateColorPicker();
+
+                // === LOGIC CỦA TRÌNH TẠO 2FA ===
+                const open2faModalBtn = document.getElementById('open-2fa-modal-btn');
+                const close2faModalBtn = document.getElementById('close-2fa-modal-btn');
+                const twoFaModal = document.getElementById('2fa-modal');
+                const secretKeyInput = document.getElementById('secretKey');
+                const outputDiv = document.getElementById('output');
+                const otpCodeP = document.getElementById('otpCode');
+                const timeLeftSpan = document.getElementById('timeLeft');
+                const progressBar = document.getElementById('progressBar');
+                const errorMessageP = document.getElementById('errorMessage');
+                const copyFeedback = document.getElementById('copyFeedback');
+
+                let otpInterval = null;
+                let copyTimeout = null;
+
+                function open2FaModal() {
+                    openModal(twoFaModal)
+                    secretKeyInput.value = '';
+                    outputDiv.classList.add('hidden');
+                    errorMessageP.textContent = '';
+                    if (otpInterval) clearInterval(otpInterval);
+                }
+
+                function close2FaModal() {
+                    closeModal(twoFaModal);
+                    if (otpInterval) clearInterval(otpInterval);
+                }
+
+                function generateAndDisplayOtp() {
+                    if (otpInterval) clearInterval(otpInterval);
+                    otpInterval = null;
+
+                    const secret = secretKeyInput.value.replace(/\s/g, '').toUpperCase();
+                    if (!secret) {
+                        outputDiv.classList.add('hidden');
+                        errorMessageP.textContent = '';
+                        return;
+                    }
+
+                    const base32Regex = /^[A-Z2-7]+=*$/;
+                    if (!base32Regex.test(secret)) {
+                        outputDiv.classList.add('hidden');
+                        errorMessageP.textContent = 'Định dạng Secret Key không hợp lệ.';
+                        return;
+                    }
+
+                    outputDiv.classList.remove('hidden');
+                    errorMessageP.textContent = '';
+
+                    try {
+                        const totp = new OTPAuth.TOTP({
+                            issuer: "ToolByKienPham",
+                            label: "2FACode",
+                            algorithm: "SHA1",
+                            digits: 6,
+                            period: 30,
+                            secret: OTPAuth.Secret.fromBase32(secret),
+                        });
+                        
+                        const updateUI = () => {
+                            const token = totp.generate();
+                            const timeLeft = 30 - (Math.floor(Date.now() / 1000) % 30);
+                            const progressPercentage = (timeLeft / 30) * 100;
+
+                            otpCodeP.textContent = `${token.slice(0, 3)} ${token.slice(3, 6)}`;
+                            timeLeftSpan.textContent = timeLeft;
+                            progressBar.style.width = `${progressPercentage}%`;
+                        };
+
+                        updateUI();
+                        otpInterval = setInterval(updateUI, 1000);
+
+                    } catch (error) {
+                        console.error("Lỗi tạo mã OTP:", error);
+                        outputDiv.classList.add('hidden');
+                        errorMessageP.textContent = 'Mã bí mật không hợp lệ. Vui lòng kiểm tra lại.';
+                    }
+                }
+
+                open2faModalBtn.addEventListener('click', open2FaModal);
+                close2faModalBtn.addEventListener('click', close2FaModal);
+                twoFaModal.addEventListener('click', (e) => {
+                    if (e.target === twoFaModal) close2FaModal();
+                });
+                
+                secretKeyInput.addEventListener('input', generateAndDisplayOtp);
+
+                otpCodeP.addEventListener('click', () => {
+                    const code = otpCodeP.textContent.replace(/\s/g, '');
+                    if (code && code !== '------') {
+                        navigator.clipboard.writeText(code).then(() => {
+                            copyFeedback.classList.remove('hidden');
+                            if (copyTimeout) clearTimeout(copyTimeout);
+                            copyTimeout = setTimeout(() => {
+                                copyFeedback.classList.add('hidden');
+                            }, 1500);
+                        }).catch(err => {
+                             console.error('Không thể sao chép mã:', err);
+                        });
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
+
+
