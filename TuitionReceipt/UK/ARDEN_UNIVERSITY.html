@@ -248,7 +248,7 @@
             const randomFirstName = getRandomElement(firstNames);
             const randomLastName = getRandomElement(lastNames);
             const studentName = `${randomFirstName} ${randomLastName}`;
-            const studentEmail = `${randomFirstName.toLowerCase()}.${randomLastName.toLowerCase()}@arden.ac.uk`;
+            const studentEmail = `${randomFirstName.toLowerCase()}.${randomLastName.toLowerCase()}.${getRandomInt(100, 999)}@arden.ac.uk`;
             const studentId = 'AU' + getRandomInt(1000000000, 9999999999);
             const studentDob = `${getRandomElement(months)} ${String(getRandomInt(1, 28)).padStart(2, '0')}, ${getRandomInt(1998, 2004)}`;
             const studentDepartment = getRandomElement(departments);
