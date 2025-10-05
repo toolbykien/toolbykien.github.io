@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tuition Fee Receipt - Sheffield Hallam University</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        /* Styles for editable fields */
+        [contenteditable="true"] {
+            outline: 1px dashed #d1d5db; /* gray-300 */
+            cursor: text;
+            padding: 0 4px;
+            border-radius: 4px;
+        }
+        [contenteditable="true"]:hover,
+        [contenteditable="true"]:focus {
+            outline: 2px solid #fb923c; /* orange-400 */
+            background-color: #fff7ed; /* orange-50 */
+        }
+
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+            /* Hide editable styles when printing */
+            [contenteditable="true"] {
+                outline: none;
+                padding: 0 4px;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
+        <!-- Action Buttons -->
+        <div class="no-print p-4 text-right space-x-4 bg-gray-50 rounded-t-lg border-b">
+             <button onclick="randomizeData()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-blue-300">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M15.312 11.424a5.5 5.5 0 01-9.223 3.832L3.467 17.88a1 1 0 01-1.334-1.49l2.44-2.179a5.5 5.5 0 018.739-2.787zM8.5 3a5.5 5.5 0 017.96 4.056l-2.44 2.179a1 1 0 01-1.335 1.49l2.622-2.622a5.5 5.5 0 01-6.807-5.103zM15 8.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0zM5 11.5a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" clip-rule="evenodd" />
+                </svg>
+                Randomize
+            </button>
+            <button onclick="window.print()" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-6 rounded-lg shadow-sm transition-transform transform hover:scale-105 focus:outline-none focus:ring-4 focus:ring-orange-300">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 inline-block mr-2" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm8 0H7v3h6V4zm0 8H7v4h6v-4z" clip-rule="evenodd" />
+                </svg>
+                Print Receipt
+            </button>
+        </div>
+
+        <div class="print-area p-6 sm:p-10">
+            <!-- Header Section -->
+            <header class="flex flex-col sm:flex-row justify-between items-start pb-6 border-b-2 border-orange-600">
+                <div class="flex items-center space-x-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Shield_of_Sheffield_Hallam_University.svg/250px-Shield_of_Sheffield_Hallam_University.svg.png" alt="Sheffield Hallam University Shield" class="w-24">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">SHEFFIELD HALLAM UNIVERSITY</h1>
+                        <p class="text-sm text-gray-500">Howard Street, Sheffield, S1 1WB, UK</p>
+                        <p class="text-sm text-gray-500">finance@shu.ac.uk | +44 (0)114 225 5555</p>
+                    </div>
+                </div>
+                <div class="text-left sm:text-right mt-4 sm:mt-0">
+                    <h2 class="text-2xl font-semibold text-gray-700">Tuition Receipt</h2>
+                    <p class="text-gray-500"><strong>Receipt #:</strong> <span id="receiptNo" contenteditable="true">SHU2025-09-54321</span></p>
+                    <p class="text-gray-500"><strong>Date Issued:</strong> <span id="dateIssued" contenteditable="true">September 08, 2025</span></p>
+                </div>
+            </header>
+
+            <!-- Student and Payment Info Section -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8 my-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-800 border-b pb-2 mb-3">Bill To:</h3>
+                    <p id="fullName" class="font-bold text-gray-700" contenteditable="true">Jane Doe</p>
+                    <p class="text-gray-600"><strong>Student ID (EID):</strong> <span id="studentId" contenteditable="true">EID87654321</span></p>
+                    <p class="text-gray-600"><strong>Date of Birth:</strong> <span id="dob" contenteditable="true">January 15, 2005</span></p>
+                    <p class="text-gray-600"><strong>Program:</strong> <span id="program" contenteditable="true">B.S. in Electrical Engineering</span></p>
+                    <p class="text-gray-600"><strong>Student Email:</strong> <span id="studentEmail" contenteditable="true">jane.doe@utexas.edu</span></p>
+                    <p class="text-gray-600"><strong>Academic Term:</strong> <span contenteditable="true">Fall 2025</span></p>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                    <h3 class="text-lg font-semibold text-gray-800">Payment Status</h3>
+                    <p class="text-2xl font-bold text-green-600 mt-2">PAID IN FULL</p>
+                    <p class="text-sm text-gray-600 mt-1"><strong>Payment Date:</strong> <span id="paymentDate" contenteditable="true">September 01, 2025</span></p>
+                    <p class="text-sm text-gray-600"><strong>Transaction ID:</strong> <span id="transactionId" contenteditable="true">987654321ABC</span></p>
+                </div>
+            </section>
+
+            <!-- Fee Details Table -->
+            <section class="mt-10">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">Detailed Statement</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                        <thead class="bg-gray-50 border-b">
+                            <tr>
+                                <th class="p-4 font-semibold text-gray-600">Description</th>
+                                <th class="p-4 font-semibold text-gray-600 text-right">Amount (GBP)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b">
+                                <td class="p-4 text-gray-700" contenteditable="true">Resident Undergraduate Tuition</td>
+                                <td class="p-4 text-gray-800 text-right fee-item" contenteditable="true" oninput="calculateTotals()">£6,050.00</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-4 text-gray-700" contenteditable="true">Student Services Fee</td>
+                                <td class="p-4 text-gray-800 text-right fee-item" contenteditable="true" oninput="calculateTotals()">£263.00</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-4 text-gray-700" contenteditable="true">University Health Services Fee</td>
+                                <td class="p-4 text-gray-800 text-right fee-item" contenteditable="true" oninput="calculateTotals()">£390.50</td>
+                            </tr>
+                            <tr class="border-b">
+                                <td class="p-4 text-gray-700" contenteditable="true">Technology & Instructional Fee</td>
+                                <td class="p-4 text-gray-800 text-right fee-item" contenteditable="true" oninput="calculateTotals()">£212.00</td>
+                            </tr>
+                             <tr class="border-b">
+                                <td class="p-4 text-gray-700" contenteditable="true">Student Union Fee</td>
+                                <td class="p-4 text-gray-800 text-right fee-item" contenteditable="true" oninput="calculateTotals()">£78.00</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td class="p-4 font-semibold text-gray-800 text-right">Subtotal</td>
+                                <td id="subtotal" class="p-4 font-semibold text-gray-800 text-right">£6,993.50</td>
+                            </tr>
+                            <tr class="text-blue-600">
+                                <td class="p-4 font-semibold text-right" contenteditable="true">Excellence Scholarship</td>
+                                <td id="scholarship" class="p-4 font-semibold text-right" contenteditable="true" oninput="calculateTotals()">(£2,500.00)</td>
+                            </tr>
+                            <tr class="bg-gray-100">
+                                <td class="p-4 font-bold text-lg text-gray-900 text-right">Total Amount Due</td>
+                                <td id="totalDue" class="p-4 font-bold text-lg text-gray-900 text-right">£4,493.50</td>
+                            </tr>
+                            <tr>
+                                <td class="p-4 font-semibold text-gray-800 text-right">Amount Paid</td>
+                                <td id="amountPaid" class="p-4 font-semibold text-gray-800 text-right" contenteditable="true" oninput="calculateTotals()">£4,493.50</td>
+                            </tr>
+                            <tr class="bg-green-100">
+                                <td class="p-4 font-bold text-xl text-green-700 text-right">Balance Due</td>
+                                <td id="balanceDue" class="p-4 font-bold text-xl text-green-700 text-right">£0.00</td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Footer -->
+            <footer class="mt-10 pt-6 border-t text-center text-gray-500 text-sm">
+                <p>Thank you for your payment. This is an official receipt from the Finance Office.</p>
+                <p>If you have any questions, please contact our office with your Student ID.</p>
+                <p class="mt-2 font-semibold">Sheffield Hallam University</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        // --- Helper functions for currency parsing and formatting ---
+        function parseCurrency(text) {
+            if (typeof text !== 'string') return 0;
+            const isNegative = text.includes('(') && text.includes(')');
+            let numString = text.replace(/[^0-9.-]/g, '');
+            let value = parseFloat(numString);
+            if (isNaN(value)) return 0;
+            return isNegative ? -Math.abs(value) : value;
+        }
+
+        function formatCurrency(value, useParenthesesForNegative = false) {
+            if (isNaN(value)) return '£0.00';
+            const absValue = Math.abs(value);
+            const formattedNumber = absValue.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+            if (value < 0) {
+                return useParenthesesForNegative ? `(£${formattedNumber})` : `-£${formattedNumber}`;
+            }
+            return `£${formattedNumber}`;
+        }
+
+        // --- Main functionalities ---
+        function calculateTotals() {
+            try {
+                let subtotal = 0;
+                document.querySelectorAll('.fee-item').forEach(item => {
+                    subtotal += parseCurrency(item.innerText);
+                });
+                document.getElementById('subtotal').innerText = formatCurrency(subtotal);
+
+                const scholarshipEl = document.getElementById('scholarship');
+                const scholarshipVal = -Math.abs(parseCurrency(scholarshipEl.innerText));
+
+                const totalDue = subtotal + scholarshipVal;
+                document.getElementById('totalDue').innerText = formatCurrency(totalDue);
+
+                const amountPaid = parseCurrency(document.getElementById('amountPaid').innerText);
+
+                const balanceDue = totalDue - amountPaid;
+                document.getElementById('balanceDue').innerText = formatCurrency(balanceDue);
+            } catch (e) {
+                console.error("Error calculating totals:", e);
+            }
+        }
+        
+        function randomizeData() {
+            const firstNames = ["Adam", "Adrian", "Alan", "Albert", "Alex", "Alfred", "Alice", "Alicia", "Amanda", "Amber", "Amy", "Andrea", "Angela", "Ann", "Anna", "Anthony", "Arthur", "Ashley", "Audrey", "Austin", "Barbara", "Ben", "Betty", "Beverly", "Billy", "Bobby", "Bradley", "Brandon", "Brenda", "Brian", "Brittany", "Bruce", "Bryan", "Carl", "Carol", "Caroline", "Catherine", "Charles", "Cheryl", "Chris", "Christina", "Christine", "Christopher", "Clara", "Cynthia", "Daniel", "David", "Deborah", "Debra", "Denise", "Dennis", "Diana", "Diane", "Donald", "Donna", "Doris", "Dorothy", "Douglas", "Edward", "Elizabeth"];
+            const lastNames = ["Adams", "Allen", "Anderson", "Bailey", "Baker", "Barnes", "Bell", "Bennett", "Brooks", "Brown", "Butler", "Campbell", "Carter", "Clark", "Collins", "Cook", "Cooper", "Cox", "Cruz", "Davis", "Diaz", "Edwards", "Evans", "Flores", "Foster", "Garcia", "Gomez", "Gray", "Green", "Griffin", "Hall", "Harris", "Hayes", "Henderson", "Hernandez", "Hill", "Howard", "Hughes", "Jackson", "James", "Jenkins", "Johnson", "Jones", "Kelly", "King", "Lee", "Lewis", "Long", "Lopez", "Martin", "Martinez", "Miller", "Mitchell", "Moore", "Morgan", "Morris", "Murphy", "Nelson", "Nguyen", "Parker"];
+            const programs = ["BSc Computer Science", "BSc Psychology", "BA Business and Marketing", "BEng Mechanical Engineering", "BA English Literature", "BSc Biology"];
+            const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+            const getRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];
+            
+            // Generate name and email
+            const firstName = getRandomItem(firstNames);
+            const lastName = getRandomItem(lastNames);
+            const fullName = `${firstName} ${lastName}`;
+            const randomThreeDigits = Math.floor(100 + Math.random() * 900);
+            const email = `${firstName.toLowerCase()}.${lastName.toLowerCase().replace(/\s/g, '')}.${randomThreeDigits}@hallam.shu.ac.uk`;
+
+
+            document.getElementById('fullName').innerText = fullName;
+            document.getElementById('studentEmail').innerText = email;
+            
+            document.getElementById('studentId').innerText = `EID${Math.floor(10000000 + Math.random() * 90000000)}`;
+            
+            const dobDay = Math.floor(1 + Math.random() * 28);
+            const dobYear = 2003 + Math.floor(Math.random() * 4);
+            document.getElementById('dob').innerText = `${getRandomItem(months)} ${dobDay}, ${dobYear}`;
+            
+            document.getElementById('program').innerText = getRandomItem(programs);
+            
+            const paymentDay = Math.floor(1 + Math.random() * 28);
+            document.getElementById('paymentDate').innerText = `${getRandomItem(months)} ${paymentDay}, 2025`;
+            
+            document.getElementById('transactionId').innerText = Math.random().toString(36).substring(2, 12).toUpperCase();
+        }
+
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', function() {
+            randomizeData();
+            calculateTotals();
+        });
+    </script>
+</body>
+</html>
+

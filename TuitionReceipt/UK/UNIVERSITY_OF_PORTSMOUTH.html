@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>University of Portsmouth - Tuition Fee Receipt</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @media print {
+            .no-print {
+                display: none !important;
+            }
+            body {
+                -webkit-print-color-adjust: exact; /* For Chrome, Safari */
+                color-adjust: exact; /* For Firefox */
+            }
+            [contenteditable="true"] {
+                border: none;
+                outline: none;
+            }
+        }
+        /* Add a visual cue for editable elements */
+        [contenteditable="true"]:hover {
+            outline: 2px dashed #003057; /* Portsmouth Navy */
+            background-color: #f0f4f7;
+            border-radius: 4px;
+        }
+         [contenteditable="true"]:focus {
+            outline: 2px solid #003057; /* Portsmouth Navy */
+            background-color: #f0f4f7;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-6 lg:p-8">
+    <div class="max-w-4xl w-full mx-auto">
+        <!-- Control Buttons -->
+        <div class="flex justify-end items-center gap-4 mb-4 no-print">
+             <button onclick="randomizeData()" class="bg-gray-500 text-white font-bold py-2 px-5 rounded-lg hover:bg-gray-600 transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                Randomize
+            </button>
+            <button onclick="printReceipt()" class="bg-[#003057] text-white font-bold py-2 px-5 rounded-lg hover:bg-[#002543] transition-colors duration-300 focus:outline-none focus:ring-2 focus:ring-[#003057] focus:ring-opacity-50">
+                Print Receipt
+            </button>
+        </div>
+
+        <!-- Receipt Container -->
+        <div class="bg-white p-8 sm:p-10 lg:p-12 rounded-2xl shadow-lg border border-gray-200">
+            <!-- Header: University Logo and Address -->
+            <header class="flex flex-col sm:flex-row justify-between items-start sm:items-center pb-8 border-b border-gray-200">
+                <div class="flex items-center">
+                    <img src="https://img.evbuc.com/https%3A%2F%2Fcdn.evbuc.com%2Fimages%2F124922623%2F29468842965%2F1%2Foriginal.20210202-170701?w=512&auto=format%2Ccompress&q=75&sharp=10&rect=0%2C0%2C656%2C656&s=b5b1611f6d14b8e20fd70f926049934b" alt="University of Portsmouth Logo" class="h-20 w-20 object-contain mr-6">
+                    <div>
+                        <h1 class="text-2xl lg:text-3xl font-bold text-gray-800 uppercase">University of Portsmouth</h1>
+                        <p class="text-sm text-gray-500" contenteditable="true">University House, Winston Churchill Ave, Portsmouth PO1 2UP, United Kingdom</p>
+                    </div>
+                </div>
+                <div class="mt-4 sm:mt-0 text-left sm:text-right">
+                    <h2 class="text-xl lg:text-2xl font-semibold text-[#003057]">Tuition Fee Receipt</h2>
+                    <p class="text-sm text-gray-500">Receipt #: <span contenteditable="true">2025-10-06-6219</span></p>
+                    <p class="text-sm text-gray-500">Date: <span contenteditable="true">October 06, 2025</span></p>
+                </div>
+            </header>
+
+            <!-- Student Information -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                <div>
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Billed To:</h3>
+                    <p id="student-name" class="text-gray-600"><span class="font-medium text-gray-600">Student Name: </span><span contenteditable="true">James Wilson</span></p>
+                    <p id="student-dob" class="text-gray-500"><span class="font-medium text-gray-600">Date of Birth: </span><span contenteditable="true">April 21, 2002</span></p>
+                    <p id="student-address" class="text-gray-500" contenteditable="true">123 Guildhall Walk, Portsmouth, PO1 2UP</p>
+                    <p id="student-email" class="text-gray-500" contenteditable="true">james.wilson.458@port.ac.uk</p>
+                </div>
+                <div class="md:text-right">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-3">Student Details:</h3>
+                    <p id="student-id" class="text-gray-500"><span class="font-medium text-gray-600">Student ID:</span> <span contenteditable="true">UP1234567</span></p>
+                    <p id="student-program" class="text-gray-500"><span class="font-medium text-gray-600">Program:</span> <span contenteditable="true">BSc (Hons) Computer Science</span></p>
+                    <p class="text-gray-500"><span class="font-medium text-gray-600">Academic Term:</span> <span contenteditable="true">Autumn 2025</span></p>
+                </div>
+            </section>
+
+            <!-- Fee Details Table -->
+            <section class="mt-10">
+                <h3 class="text-lg font-semibold text-gray-700 mb-4">Fee Breakdown:</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left rounded-lg overflow-hidden">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="p-4 text-sm font-semibold text-gray-600 tracking-wider">Description</th>
+                                <th class="p-4 text-sm font-semibold text-gray-600 tracking-wider text-right">Amount (GBP)</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Tuition Fee (Full-time)</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">£9,250.00</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Accommodation Fee (Halls)</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">£5,500.00</td>
+                            </tr>
+                            <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Student Union Contribution</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">£150.00</td>
+                            </tr>
+                             <tr class="border-b border-gray-100">
+                                <td class="p-4 text-gray-600" contenteditable="true">Library & IT Resources Fee</td>
+                                <td class="p-4 text-gray-600 text-right fee-amount" contenteditable="true">£250.00</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Totals Section -->
+            <section class="grid grid-cols-1 sm:grid-cols-2 gap-8 mt-8">
+                <div class="flex items-center justify-center">
+                     <div class="text-center p-6 border-4 border-green-500 rounded-lg transform -rotate-12">
+                        <h3 class="text-3xl font-bold text-green-600 tracking-widest">PAID IN FULL</h3>
+                        <p class="text-green-500">Thank you for your payment!</p>
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-gray-600">
+                        <p>Subtotal:</p>
+                        <p class="font-medium" id="subtotal-value">£15,150.00</p>
+                    </div>
+                    <div class="flex justify-between items-center text-blue-600">
+                        <p contenteditable="true">Vice Chancellor's Scholarship:</p>
+                        <p class="font-medium" id="scholarship-value" contenteditable="true">-£2,000.00</p>
+                    </div>
+                    <hr class="my-2 border-gray-200">
+                    <div class="flex justify-between items-center text-gray-800 font-bold text-xl">
+                        <p>Total Amount Due:</p>
+                        <p id="total-due-value">£13,150.00</p>
+                    </div>
+                    <div class="flex justify-between items-center text-gray-600">
+                        <p>Payment Received (Bank Transfer):</p>
+                        <p class="font-medium" id="payment-received-value">£13,150.00</p>
+                    </div>
+                    <div class="flex justify-between items-center bg-gray-100 p-3 rounded-lg">
+                        <p class="font-semibold text-gray-800">Balance Due:</p>
+                        <p class="font-bold text-lg text-green-600" id="balance-due-value">£0.00</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Footer & Print Button -->
+            <footer class="mt-12 text-center">
+                <p class="text-sm text-gray-500" contenteditable="true">This is an official receipt. If you have any questions, please contact the Income & Payments team.</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function printReceipt() {
+            window.print();
+        }
+
+        function randomizeData() {
+            // Sample data arrays
+            const firstNames = ["Oliver", "George", "Arthur", "Noah", "Muhammad", "Leo", "Oscar", "Harry", "Archie", "Jack", "Henry", "Charlie", "Freddie", "Theodore", "Thomas", "Finley", "Alfie", "Jacob", "William", "Isaac", "Lucas", "Alexander", "James", "Joshua", "Max", "Ethan", "Reuben", "Samuel", "Joseph", "Adam", "Daniel", "Edward", "Benjamin", "Sebastian", "Roman", "Arlo", "Jude", "Luca", "Logan", "Rory", "Mason", "Harrison", "Caleb", "Louie", "Elijah", "Hugo", "Ryan", "David", "Nathan", "Dylan", "Ezra", "Albie", "Toby", "Stanley", "Felix", "Gabriel", "Albert", "Michael", "Jesse", "Elliot"];
+            const lastNames = ["Smith", "Jones", "Williams", "Brown", "Taylor", "Davies", "Wilson", "Evans", "Thomas", "Roberts", "Johnson", "Lewis", "Walker", "Robinson", "Wood", "Thompson", "White", "Watson", "Jackson", "Wright", "Green", "Harris", "Cooper", "King", "Lee", "Martin", "Clarke", "James", "Morgan", "Hughes", "Edwards", "Hill", "Moore", "Clark", "Harrison", "Scott", "Young", "Morris", "Hall", "Ward", "Turner", "Carter", "Phillips", "Mitchell", "Patel", "Adams", "Campbell", "Anderson", "Allen", "Cook", "Bailey", "Parker", "Miller", "Davis", "Murphy", "Price", "Bell", "Baker", "Marshall", "Stevens"];
+            const streets = ["Guildhall Walk", "King Henry I Street", "St George's Road", "Victoria Road North", "Elm Grove", "Albert Road", "Palmerston Road", "Clarence Parade"];
+            const programs = ["BSc (Hons) Computer Science", "MEng Mechanical Engineering", "BA (Hons) Architecture", "MSc Cyber Security and Forensic Information Technology", "LLB (Hons) Law", "BSc (Hons) Psychology", "MA Graphic Design", "PhD in Physics"];
+
+            // 1. Generate random data
+            const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const fullName = `${randomFirstName} ${randomLastName}`;
+            const randomStreetNum = Math.floor(Math.random() * 200) + 1;
+            const randomStreet = streets[Math.floor(Math.random() * streets.length)];
+            const fullAddress = `${randomStreetNum} ${randomStreet}, Portsmouth, PO1 2UP`;
+            const randomDigits = Math.floor(Math.random() * 900) + 100;
+            const email = `${randomFirstName.toLowerCase()}.${randomLastName.toLowerCase()}.${randomDigits}@port.ac.uk`;
+            const studentId = `UP${Math.floor(Math.random() * 9000000) + 1000000}`;
+            const randomProgram = programs[Math.floor(Math.random() * programs.length)];
+
+            // Generate random Date of Birth (student age between 18 and 25)
+            const currentYear = 2025;
+            const birthYear = Math.floor(Math.random() * 8) + (currentYear - 25);
+            const birthMonth = Math.floor(Math.random() * 12);
+            const birthDay = Math.floor(Math.random() * 28) + 1;
+            const birthDate = new Date(birthYear, birthMonth, birthDay);
+            const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+            const formattedDob = `${monthNames[birthDate.getMonth()]} ${birthDate.getDate()}, ${birthDate.getFullYear()}`;
+
+            // 2. Update the DOM
+            document.getElementById('student-name').innerHTML = `<span class="font-medium text-gray-600">Student Name: </span><span contenteditable="true">${fullName}</span>`;
+            document.getElementById('student-address').textContent = fullAddress;
+            document.getElementById('student-email').textContent = email;
+            document.getElementById('student-id').innerHTML = `<span class="font-medium text-gray-600">Student ID:</span> <span contenteditable="true">${studentId}</span>`;
+            document.getElementById('student-program').innerHTML = `<span class="font-medium text-gray-600">Program:</span> <span contenteditable="true">${randomProgram}</span>`;
+            document.getElementById('student-dob').innerHTML = `<span class="font-medium text-gray-600">Date of Birth: </span><span contenteditable="true">${formattedDob}</span>`;
+        }
+        
+        // --- Calculation Logic ---
+
+        // Helper function to parse currency strings into numbers
+        function parseCurrency(value) {
+            if (typeof value !== 'string') return 0;
+            return parseFloat(value.replace(/[^0-9.-]+/g, "")) || 0;
+        }
+
+        // Helper function to format numbers into currency strings
+        function formatCurrency(number) {
+            return new Intl.NumberFormat('en-GB', {
+                style: 'currency',
+                currency: 'GBP'
+            }).format(number);
+        }
+
+        // Main function to calculate and update all totals
+        function updateTotals() {
+            let subtotal = 0;
+            document.querySelectorAll('.fee-amount').forEach(cell => {
+                subtotal += parseCurrency(cell.textContent);
+            });
+
+            const scholarship = parseCurrency(document.getElementById('scholarship-value').textContent);
+            const totalDue = subtotal + scholarship; // Scholarship is negative, so adding is correct.
+
+            document.getElementById('subtotal-value').textContent = formatCurrency(subtotal);
+            document.getElementById('total-due-value').textContent = formatCurrency(totalDue);
+            document.getElementById('payment-received-value').textContent = formatCurrency(totalDue);
+            document.getElementById('balance-due-value').textContent = formatCurrency(0);
+        }
+
+        // Function to set up the event listeners
+        function setupEventListeners() {
+            const editableFields = document.querySelectorAll('.fee-amount, #scholarship-value');
+            editableFields.forEach(field => {
+                field.addEventListener('input', updateTotals);
+            });
+        }
+        
+        // On page load: randomize data, set up listeners, and run initial calculation
+        window.onload = function() {
+            randomizeData();
+            setupEventListeners();
+            updateTotals();
+        };
+
+    </script>
+</body>
+</html>
+
+
