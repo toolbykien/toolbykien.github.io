@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biên lai học phí - TRƯỜNG ĐẠI HỌC NGHỆ AN</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .header-bg {
+            background-color: #f7f7f7;
+        }
+        .naue-red {
+            color: #c41230;
+        }
+        .naue-gray {
+            color: #4c4c4c;
+        }
+        /* Styles for editable fields */
+        [contenteditable]:hover {
+            outline: 2px dashed #c41230;
+            background-color: #fffbe6;
+        }
+         [contenteditable]:focus {
+            outline: 2px solid #c41230;
+             background-color: #fffbe6;
+        }
+        @media print {
+            body {
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+            }
+            .no-print {
+                display: none;
+            }
+            /* Remove styles on print */
+            [contenteditable]:hover, [contenteditable]:focus {
+                outline: none;
+                background-color: transparent;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
+
+    <div class="max-w-4xl mx-auto">
+        <div class="text-right mb-4 no-print">
+            <button onclick="randomizeInfo()" class="bg-gray-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-gray-700 transition duration-300">
+                Ngẫu nhiên
+            </button>
+            <button onclick="window.print()" class="bg-red-700 text-white font-bold py-2 px-6 rounded-lg hover:bg-red-800 transition duration-300 ml-2">
+                In biên lai
+            </button>
+        </div>
+    
+        <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <header class="header-bg p-8 border-b-4 border-red-700">
+                <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center">
+                    <div class="flex items-center mb-4 sm:mb-0">
+                         <img src="https://naue.edu.vn/Images/new_layout/logo_dhktna_2022.png" alt="Logo TRƯỜNG ĐẠI HỌC NGHỆ AN" class="h-16 w-auto mr-4">
+                        <div>
+                            <h1 class="text-3xl font-bold naue-gray">TRƯỜNG ĐẠI HỌC NGHỆ AN</h1>
+                            <p class="text-gray-600">Phòng Dịch vụ Sinh viên</p>
+                        </div>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <p class="text-gray-700">Số 51, Lý Tự Trọng</p>
+                        <p class="text-gray-700">Thành phố Vinh, Nghệ An</p>
+                        <p class="text-gray-700">Việt Nam</p>
+                        <p class="text-gray-700">www.naue.edu.vn</p>
+                    </div>
+                </div>
+            </header>
+
+            <main class="p-8">
+                <h2 class="text-3xl font-bold naue-red text-center mb-8">BIÊN LAI HỌC PHÍ - ĐÃ THANH TOÁN ĐẦY ĐỦ</h2>
+                
+                <!-- Student & Billing Information -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h3 class="font-bold text-lg mb-2 border-b pb-2 naue-gray">Thông tin sinh viên</h3>
+                        <div class="grid grid-cols-2 gap-2 text-sm">
+                            <span class="font-semibold text-gray-600">Họ và Tên:</span>
+                            <span id="fullName" contenteditable="true"></span>
+                            <span class="font-semibold text-gray-600">Mã số sinh viên:</span>
+                            <span id="studentId" contenteditable="true"></span>
+                            <span class="font-semibold text-gray-600">Ngày sinh:</span>
+                            <span id="dateOfBirth" contenteditable="true"></span>
+                            <span class="font-semibold text-gray-600">Khoa/Trường:</span>
+                            <span id="collegeSchool" contenteditable="true"></span>
+                            <span class="font-semibold text-gray-600">Chương trình:</span>
+                            <span id="program" contenteditable="true"></span>
+                            <span class="font-semibold text-gray-600">Email sinh viên:</span>
+                            <span id="studentEmail" contenteditable="true"></span>
+                        </div>
+                    </div>
+                    <div class="bg-gray-50 p-4 rounded-lg border">
+                        <h3 class="font-bold text-lg mb-2 border-b pb-2 naue-gray">Thông tin sao kê</h3>
+                         <div class="grid grid-cols-2 gap-2 text-sm">
+                            <span class="font-semibold text-gray-600">Ngày sao kê:</span>
+                            <span contenteditable="true">08/10/2025</span>
+                            <span class="font-semibold text-gray-600">Học kỳ:</span>
+                            <span>Học kỳ 1, 2025</span>
+                            <span class="font-semibold text-gray-600">Mã sao kê:</span>
+                            <span contenteditable="true">NAUE-2025-10-74874</span>
+                            <span class="font-semibold text-gray-600">Hạn thanh toán:</span>
+                            <span contenteditable="true"><b>01/11/2025</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charges & Credits Table -->
+                <div>
+                    <h3 class="text-xl font-semibold mb-4 naue-gray">Chi tiết các khoản phí và tín dụng</h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm text-left text-gray-600">
+                            <thead class="text-xs text-gray-700 uppercase bg-gray-100">
+                                <tr>
+                                    <th scope="col" class="px-6 py-3 rounded-l-lg">Mô tả</th>
+                                    <th scope="col" class="px-6 py-3 text-right">Các khoản phí (VNĐ)</th>
+                                    <th scope="col" class="px-6 py-3 text-right rounded-r-lg">Tín dụng/Thanh toán (VNĐ)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium">Học phí đại học</td>
+                                    <td class="px-6 py-4 text-right">25,000,000</td>
+                                    <td class="px-6 py-4"></td>
+                                </tr>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium">Phí công nghệ</td>
+                                    <td class="px-6 py-4 text-right">250,000</td>
+                                    <td class="px-6 py-4"></td>
+                                </tr>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium">Phí hoạt động sinh viên</td>
+                                    <td class="px-6 py-4 text-right">150,000</td>
+                                    <td class="px-6 py-4"></td>
+                                </tr>
+                                 <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium">Phí đi lại</td>
+                                    <td class="px-6 py-4 text-right">125,000</td>
+                                    <td class="px-6 py-4"></td>
+                                </tr>
+                                <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium">Bảo hiểm y tế bắt buộc</td>
+                                    <td class="px-6 py-4 text-right">1,200,000</td>
+                                    <td class="px-6 py-4"></td>
+                                </tr>
+                                 <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium text-green-600">Học bổng TRƯỜNG ĐẠI HỌC NGHỆ AN</td>
+                                    <td class="px-6 py-4"></td>
+                                    <td class="px-6 py-4 text-right text-green-600">(10,000,000)</td>
+                                </tr>
+                                 <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium text-green-600">Khoản vay sinh viên</td>
+                                    <td class="px-6 py-4"></td>
+                                    <td class="px-6 py-4 text-right text-green-600">(5,000,000)</td>
+                                </tr>
+                                 <tr class="bg-white border-b">
+                                    <td class="px-6 py-4 font-medium text-green-600"><b>Đã nhận thanh toán (08/10/2025) - Cảm ơn!</b></td>
+                                    <td class="px-6 py-4"></td>
+                                    <td class="px-6 py-4 text-right text-green-600">(11,725,000)</td>
+                                </tr>
+                            </tbody>
+                            <tfoot>
+                                <tr class="font-semibold text-gray-800 bg-gray-100">
+                                    <td class="px-6 py-3 text-base">Tổng cộng</td>
+                                    <td class="px-6 py-3 text-right text-base">26,725,000</td>
+                                    <td class="px-6 py-3 text-right text-base">(26,725,000)</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Summary -->
+                <div class="mt-8 flex justify-end">
+                    <div class="w-full md:w-1/2 lg:w-1/3">
+                        <div class="bg-green-50 p-4 rounded-lg border border-green-200">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="font-semibold text-gray-600">Tổng các khoản phí:</span>
+                                <span>26,725,000 VNĐ</span>
+                            </div>
+                            <div class="flex justify-between items-center mb-3">
+                                <span class="font-semibold text-gray-600">Tổng tín dụng/thanh toán:</span>
+                                <span>(26,725,000 VNĐ)</span>
+                            </div>
+                             <hr/>
+                            <div class="flex justify-between items-center mt-3">
+                                <span class="font-bold text-xl text-green-700">SỐ DƯ:</span>
+                                <span class="font-bold text-xl text-green-700">0 VNĐ</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                 <!-- Notes and Payment Instructions -->
+                <div class="mt-12 border-t pt-6">
+                    <h3 class="font-bold text-lg mb-2 naue-gray">Ghi chú quan trọng</h3>
+                    <p class="text-sm text-gray-600 mb-4">
+                        Sao kê này xác nhận rằng số dư cho học kỳ 1 năm 2025 đã được thanh toán đầy đủ. Cảm ơn bạn đã thanh toán đúng hạn. Không cần thực hiện thêm hành động nào vào lúc này.
+                    </p>
+                    <div class="text-sm text-gray-600">
+                         <p><span class="font-semibold">Nếu có thắc mắc về tài khoản, vui lòng liên hệ:</span> Phòng Dịch vụ Sinh viên tại <a href="mailto:dichvusinhvien@naue.edu.vn" class="text-blue-600 hover:underline">dichvusinhvien@naue.edu.vn</a>.</p>
+                    </div>
+                </div>
+
+            </main>
+            
+            <footer class="text-center p-4 bg-gray-800 text-white text-xs no-print">
+                <p>Đây là một tài liệu được tạo tự động. Vui lòng không trả lời email này.</p>
+                <p>&copy; 2025 TRƯỜNG ĐẠI HỌC NGHỆ AN. Đã đăng ký bản quyền.</p>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        function removeDiacritics(str) {
+            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+        }
+
+        function randomizeInfo() {
+            // Data for randomization
+            const lastNames = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý", "Đoàn", "Vương", "Trịnh", "Đinh", "Lương", "Cao", "Hà", "Trương", "Tạ", "Lâm", "Tôn", "Mai", "Thạch", "Cù", "Chế", "Hứa", "Giáp", "Từ", "Phùng", "Quách", "Thân", "Kiều", "Tiêu", "Chu", "Lưu", "La", "Mạc", "Tô", "Đàm", "Giang", "Uông", "Vừ", "Lò", "Lù"];
+            const middleNames = ["Văn", "Thị", "Hữu", "Minh", "Gia", "Bảo", "Ngọc", "Đức", "Tấn", "Quốc", "Khánh", "Mạnh", "Thanh", "Đình", "Nhật", "Công", "Đăng", "Đông", "Hoài", "Hồng", "Huy", "Khang", "Khiêm", "Kiên", "Kim", "Lâm", "Long", "Nghĩa", "Nguyên", "Phi", "Phú", "Phúc", "Phương", "Quang", "Sỹ", "Tài", "Tân", "Thành", "Thiên", "Trọng", "Trường", "Tuyền", "Uy", "Viết", "Xuân", "Yên"];
+            const firstNames = ["An", "Anh", "Bảo", "Châu", "Chi", "Dũng", "Duy", "Giang", "Hà", "Hải", "Hằng", "Hiếu", "Hoa", "Huy", "Hùng", "Hương", "Khánh", "Khoa", "Khôi", "Lam", "Lan", "Linh", "Long", "Ly", "Mai", "Minh", "Nam", "Nga", "Ngọc", "Nguyên", "Nguyệt", "Nhi", "Phong", "Phương", "Quân", "Quỳnh", "Sơn", "Tâm", "Thảo", "Thịnh", "Thủy", "Trang", "Trung", "Tú", "Tuấn", "Tùng", "Uyên", "Vân", "Việt", "Vy"];
+            const months = ["Tháng 1", "Tháng 2", "Tháng 3", "Tháng 4", "Tháng 5", "Tháng 6", "Tháng 7", "Tháng 8", "Tháng 9", "Tháng 10", "Tháng 11", "Tháng 12"];
+            
+            const collegesAndPrograms = {
+                "Khoa Công nghệ thông tin": ["Cử nhân Khoa học máy tính", "Cử nhân Trí tuệ nhân tạo", "Cử nhân Sinh học tính toán"],
+                "Khoa Kỹ thuật": ["Cử nhân Kỹ thuật cơ khí", "Cử nhân Kỹ thuật điện & máy tính", "Cử nhân Kỹ thuật xây dựng"],
+                "Khoa Khoa học xã hội và nhân văn": ["Cử nhân Kinh tế", "Cử nhân Tâm lý học", "Cử nhân Lịch sử"],
+                "Khoa Khoa học": ["Cử nhân Vật lý", "Cử nhân Hóa học", "Cử nhân Khoa học sinh học"],
+                "Khoa Mỹ thuật": ["Cử nhân Kịch nghệ", "Cử nhân Kiến trúc", "Cử nhân Âm nhạc"],
+                "Trường Kinh doanh": ["Cử nhân Quản trị kinh doanh", "Cử nhân Kinh tế và Chính trị"]
+            };
+
+            // Generate random full name
+            const randomLastName = lastNames[Math.floor(Math.random() * lastNames.length)];
+            const randomMiddleName = middleNames[Math.floor(Math.random() * middleNames.length)];
+            const randomFirstName = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const fullName = `${randomLastName} ${randomMiddleName} ${randomFirstName}`;
+            
+            // Generate email based on name
+            const unaccentedFirstName = removeDiacritics(randomFirstName.toLowerCase());
+            const unaccentedLastName = removeDiacritics(randomLastName.toLowerCase());
+            const randomThreeDigits = Math.floor(100 + Math.random() * 900);
+            const email = `${unaccentedFirstName}.${unaccentedLastName}.${randomThreeDigits}@naue.edu.vn`;
+
+
+            // Generate random student ID
+            const randomIdNumber = Math.floor(100000000 + Math.random() * 900000000);
+            const studentId = `NAUE${randomIdNumber}`;
+
+            // Generate random date of birth
+            const randomYear = Math.floor(Math.random() * (2006 - 2003 + 1)) + 2003;
+            const randomMonth = months[Math.floor(Math.random() * months.length)];
+            const randomDay = Math.floor(Math.random() * 28) + 1; // Keep it simple, max 28 days for all months
+            const dateOfBirth = `${randomDay}, ${randomMonth}, ${randomYear}`;
+
+            // Generate random College/School and Program
+            const colleges = Object.keys(collegesAndPrograms);
+            const randomCollege = colleges[Math.floor(Math.random() * colleges.length)];
+            const programsInCollege = collegesAndPrograms[randomCollege];
+            const randomProgram = programsInCollege[Math.floor(Math.random() * programsInCollege.length)];
+
+            // Update HTML elements
+            document.getElementById('fullName').innerText = fullName;
+            document.getElementById('studentId').innerText = studentId;
+            document.getElementById('dateOfBirth').innerText = dateOfBirth;
+            document.getElementById('collegeSchool').innerText = randomCollege;
+            document.getElementById('program').innerText = randomProgram;
+            document.getElementById('studentEmail').innerText = email;
+        }
+
+        // Randomize information when the page loads
+        window.onload = randomizeInfo;
+    </script>
+
+</body>
+</html>
+

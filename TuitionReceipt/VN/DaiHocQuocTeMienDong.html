@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Biên Lai Học Phí - Đại học Quốc tế Miền Đông</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+            .print-area, .print-area * {
+                visibility: visible;
+            }
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+            .no-print {
+                display: none;
+            }
+            [contenteditable="true"] {
+                border: none !important;
+                background-color: transparent !important;
+            }
+        }
+        /* Styles for editable fields */
+        [contenteditable="true"] {
+            transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            padding: 2px 4px;
+            margin: -2px -4px;
+            border-radius: 4px;
+            cursor: text;
+        }
+        [contenteditable="true"]:hover {
+             background-color: #f0f0f0;
+        }
+        [contenteditable="true"]:focus {
+            outline: none;
+            background-color: #f5f3ff;
+            box-shadow: 0 0 0 2px #8B5CF6;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto bg-white shadow-lg rounded-lg">
+        <!-- Header with buttons -->
+        <div class="px-8 py-4 border-b border-gray-200 flex justify-between items-center no-print">
+            <h2 class="text-lg font-semibold text-gray-700">Xem Trước Biên Lai</h2>
+            <div class="flex items-center space-x-2">
+                <button onclick="randomizeData()" class="px-4 py-2 bg-gray-500 text-white text-sm font-medium rounded-md hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500">
+                    Ngẫu Nhiên
+                </button>
+                <button onclick="window.print()" class="px-4 py-2 bg-purple-700 text-white text-sm font-medium rounded-md hover:bg-purple-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-600">
+                    In Biên Lai
+                </button>
+            </div>
+        </div>
+
+        <!-- Receipt Content -->
+        <div class="print-area p-8 sm:p-12">
+            <!-- University Header -->
+            <header class="flex justify-between items-start mb-10">
+                <div>
+                    <h2 class="text-xl font-bold text-blue-800 tracking-wider mb-2">TRƯỜNG ĐẠI HỌC QUỐC TẾ MIỀN ĐÔNG</h2>
+                    <img src="https://cdn.haitrieu.com/wp-content/uploads/2021/12/Logo-DH-Quoc-Te-Mien-Dong-EIU-Ogri.png" alt="EIU Logo" class="h-24 sm:h-32 w-auto object-contain">
+                     <p class="text-sm text-gray-500 mt-2">Đường Nam Kỳ Khởi Nghĩa, Định Hoà, Thủ Dầu Một, Bình Dương</p>
+                </div>
+                <div class="text-right">
+                    <h1 class="text-3xl sm:text-4xl font-bold text-gray-800 uppercase">BIÊN LAI HỌC PHÍ</h1>
+                    <p class="text-sm text-gray-500 mt-1">Số Biên Lai: <span id="receipt-no" contenteditable="true"></span></p>
+                </div>
+            </header>
+
+            <!-- Student and Receipt Info -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-8 mb-10">
+                <div>
+                    <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-2">THANH TOÁN CHO</h3>
+                    <p id="student-name" contenteditable="true" class="font-bold text-gray-900"></p>
+                    <p class="text-gray-600"><strong class="font-semibold text-gray-800">Mã số sinh viên:</strong> <span id="student-id-value" contenteditable="true"></span></p>
+                    <p class="text-gray-600"><strong class="font-semibold text-gray-800">Ngày sinh:</strong> <span id="student-dob-value" contenteditable="true"></span></p>
+                    <p id="student-address" contenteditable="true" class="text-gray-600 mt-2"></p>
+                    <p class="text-gray-600"><strong class="font-semibold text-gray-800">Email:</strong> <span id="student-email-value" contenteditable="true"></span></p>
+                    <p class="font-medium text-gray-700 mt-2"><strong class="font-semibold text-gray-800">Chương trình học:</strong> <span id="student-program-value" contenteditable="true"></span></p>
+                </div>
+                <div class="text-left sm:text-right">
+                    <div class="mb-2">
+                        <span class="font-semibold text-gray-600">Ngày Lập:</span>
+                        <span id="issue-date" contenteditable="true" class="text-gray-800"></span>
+                    </div>
+                    <div class="mb-2">
+                        <span class="font-semibold text-gray-600">Ngày Thanh Toán:</span>
+                        <span id="payment-date" contenteditable="true" class="text-gray-800"></span>
+                    </div>
+                    <div>
+                        <span class="font-semibold text-gray-600">Học Kỳ:</span>
+                        <span id="academic-term" contenteditable="true" class="text-gray-800"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Fees Table -->
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead class="bg-gray-50 border-b border-gray-200">
+                        <tr>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">Mô Tả</th>
+                            <th class="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider text-right">Số Tiền</th>
+                        </tr>
+                    </thead>
+                    <tbody id="fees-body" class="bg-white divide-y divide-gray-200">
+                        <!-- Rows will be injected by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Summary -->
+            <div class="flex justify-end mt-8">
+                <div class="w-full sm:w-1/2 md:w-2/5">
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-gray-600">Tổng Phụ</span>
+                            <span id="subtotal" class="text-gray-800 font-medium"></span>
+                        </div>
+                        <div class="flex justify-between text-green-600">
+                            <span id="scholarship-name" contenteditable="true"></span>
+                            <span id="scholarship-amount" contenteditable="true" class="font-medium"></span>
+                        </div>
+                        <div class="flex justify-between border-t pt-2">
+                            <span class="text-gray-600 font-semibold">Tổng Phải Thu</span>
+                            <span id="total-due" class="text-gray-900 font-semibold"></span>
+                        </div>
+                         <div class="flex justify-between">
+                            <span class="text-gray-600">Số Tiền Đã Thanh Toán</span>
+                            <span id="amount-paid" class="text-gray-800 font-medium"></span>
+                        </div>
+                        <div class="flex justify-between bg-purple-100 p-3 rounded-lg">
+                            <span class="text-purple-800 font-bold text-lg">Số Dư Còn Lại</span>
+                            <span id="balance-due" class="text-purple-800 font-bold text-lg">0 ₫</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Paid Stamp -->
+            <div class="mt-12 text-center relative">
+                 <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="border-4 border-green-500 text-green-500 rounded-lg p-4 rotate-[-15deg] opacity-75">
+                        <h2 class="text-5xl sm:text-6xl font-black uppercase tracking-widest">ĐÃ THANH TOÁN</h2>
+                    </div>
+                </div>
+            </div>
+             
+             <!-- Footer -->
+            <footer class="mt-24 pt-8 border-t text-center text-gray-500 text-sm">
+                <p>Cảm ơn bạn đã thanh toán!</p>
+                <p>Mọi thắc mắc vui lòng liên hệ phòng tài chính sinh viên tại <a href="mailto:taichinh.sinhvien@eiu.edu.vn" class="text-purple-700 hover:underline">taichinh.sinhvien@eiu.edu.vn</a>.</p>
+            </footer>
+
+        </div>
+    </div>
+
+    <script>
+        const firstNames = ["An", "Bình", "Châu", "Dũng", "Giang", "Hải", "Khánh", "Linh", "Minh", "Nam", "Oanh", "Phúc", "Quân", "Sơn", "Thảo", "Uyên", "Vân", "Xuân", "Yến", "Cường", "Đạt", "Hà", "Hưng", "Kiên", "Long", "Mai", "Nga", "Phú", "Quỳnh", "Tâm", "Thành", "Trang", "Việt", "Anh", "Bảo", "Chi", "Đức", "Hiền", "Huy", "Lan", "My", "Ngọc", "Phong", "Thắng", "Tiến", "Tú", "Vinh", "Ánh", "Duy", "Hạnh"];
+        const lastNames = ["Nguyễn Văn", "Trần Thị", "Lê Minh", "Phạm Hoàng", "Huỳnh Ngọc", "Võ Thành", "Phan Thanh", "Trương Tuấn", "Bùi Gia", "Đặng Quốc", "Đỗ Hải", "Hồ An", "Ngô Bảo", "Dương Minh", "Lý Gia", "Đinh Thị", "Đoàn Văn", "Vương", "Lâm", "Tô", "Mai Anh", "Hoàng", "Nguyễn Thị", "Trần Văn", "Lê Thị", "Phạm Văn", "Huỳnh Văn", "Võ Thị", "Phan Thị", "Trương Văn", "Bùi Thị", "Đặng Văn", "Đỗ Thị", "Hồ Văn", "Ngô Thị", "Dương Thị", "Lý Văn", "Đinh Văn", "Đoàn Thị", "Vương Thị", "Lâm Văn", "Tô Văn", "Mai Văn", "Hoàng Văn", "Nguyễn Minh", "Trần Tuấn", "Lê Đức", "Phạm Anh", "Huỳnh Bảo", "Võ Quốc"];
+        const addresses = ["123 Lý Thường Kiệt, Dĩ An, Bình Dương", "456 CMT8, Thủ Dầu Một, Bình Dương", "789 Đại lộ Bình Dương, Thuận An, Bình Dương"];
+        const scholarshipTypes = ["Học bổng Chủ tịch", "Học bổng Khuyến khích học tập", "Học bổng Doanh nghiệp", "Học bổng Toàn phần"];
+        const programs = ["Cử nhân Khoa học máy tính", "Thạc sĩ Quản trị kinh doanh", "Cử nhân Kỹ thuật điện", "Kỹ sư Cơ điện tử", "Cử nhân Điều dưỡng"];
+        
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(amount);
+        }
+
+        function parseCurrency(currencyString) {
+            if (typeof currencyString !== 'string') return 0;
+            // Remove currency symbols and group separators, then parse as float
+            const numberString = currencyString.replace(/[₫.\s]/g, '').replace(',', '.');
+            const number = parseFloat(numberString);
+            return isNaN(number) ? 0 : number;
+        }
+
+        function formatDate(date) {
+            return date.toLocaleDateString('vi-VN', { year: 'numeric', month: 'long', day: 'numeric' });
+        }
+
+        function getRandomItem(arr) {
+            return arr[Math.floor(Math.random() * arr.length)];
+        }
+        
+        function getRandomNumber(min, max) {
+            return Math.random() * (max - min) + min;
+        }
+
+        function updateSummary() {
+            let subtotal = 0;
+            const feeElements = document.querySelectorAll('.fee-amount');
+            feeElements.forEach(el => {
+                subtotal += parseCurrency(el.textContent);
+            });
+
+            const scholarshipEl = document.getElementById('scholarship-amount');
+            // Get the absolute value of the scholarship since it's always a deduction.
+            const scholarshipAmount = Math.abs(parseCurrency(scholarshipEl.textContent));
+
+            const totalDue = subtotal - scholarshipAmount;
+
+            // Update display values
+            document.getElementById('subtotal').textContent = formatCurrency(subtotal);
+            document.getElementById('scholarship-amount').textContent = formatCurrency(scholarshipAmount); // Display as positive
+            document.getElementById('total-due').textContent = formatCurrency(totalDue);
+            document.getElementById('amount-paid').textContent = formatCurrency(totalDue); // Amount paid equals the total due
+            document.getElementById('balance-due').textContent = "0 ₫"; // Balance is zero
+        }
+
+        function removeAccents(str) {
+            return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D');
+        }
+
+        function randomizeData() {
+            // Random Payment Date
+            const startDate = new Date('2025-08-01T00:00:00');
+            const endDate = new Date('2025-09-10T23:59:59');
+            const randomPaymentDate = new Date(startDate.getTime() + Math.random() * (endDate.getTime() - startDate.getTime()));
+            document.getElementById('payment-date').textContent = formatDate(randomPaymentDate);
+
+            // Basic Info
+            document.getElementById('receipt-no').textContent = `EIU-${Math.floor(100000 + Math.random() * 900000)}`;
+            document.getElementById('academic-term').textContent = "Học kỳ 1, 2025-2026";
+            
+            // Student Info
+            const firstName = getRandomItem(firstNames);
+            const lastName = getRandomItem(lastNames);
+            const studentName = `${lastName} ${firstName}`;
+            document.getElementById('student-name').textContent = studentName;
+            
+            const emailFirstName = removeAccents(firstName).toLowerCase().replace(/\s/g, '');
+            const emailLastName = removeAccents(lastName).toLowerCase().replace(/\s/g, '');
+            const email = `${emailFirstName}.${emailLastName}@eiu.edu.vn`;
+            document.getElementById('student-email-value').textContent = email;
+
+            const currentYear = new Date().getFullYear();
+            const birthYear = currentYear - (18 + Math.floor(Math.random() * 6));
+            const birthMonth = Math.floor(Math.random() * 12);
+            const birthDay = Math.floor(Math.random() * 28) + 1;
+            const dob = new Date(birthYear, birthMonth, birthDay);
+            document.getElementById('student-dob-value').textContent = formatDate(dob);
+
+            document.getElementById('student-id-value').textContent = `EIU${Math.floor(10000000 + Math.random() * 90000000)}`;
+            document.getElementById('student-address').textContent = getRandomItem(addresses);
+            document.getElementById('student-program-value').textContent = getRandomItem(programs);
+
+            // Fees
+            const fees = [
+                { name: `Học phí ${document.getElementById('academic-term').textContent}`, amount: getRandomNumber(20000000, 30000000) },
+                { name: 'Phí công nghệ', amount: getRandomNumber(500000, 1000000) },
+                { name: 'Phí dịch vụ y tế', amount: getRandomNumber(300000, 600000) },
+                { name: 'Phí hoạt động sinh viên', amount: getRandomNumber(200000, 400000) },
+            ];
+            
+            const feesBody = document.getElementById('fees-body');
+            feesBody.innerHTML = ''; 
+            
+            fees.forEach(fee => {
+                const row = `
+                    <tr>
+                        <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${fee.name}</td>
+                        <td contenteditable="true" class="px-6 py-4 whitespace-nowrap text-sm text-gray-500 text-right fee-amount">${formatCurrency(fee.amount)}</td>
+                    </tr>
+                `;
+                feesBody.innerHTML += row;
+            });
+            
+            const scholarshipName = getRandomItem(scholarshipTypes);
+            const subtotalForScholarship = fees.reduce((acc, fee) => acc + fee.amount, 0);
+            const scholarshipAmount = subtotalForScholarship * getRandomNumber(0.15, 0.40);
+
+            document.getElementById('scholarship-name').textContent = scholarshipName;
+            document.getElementById('scholarship-amount').textContent = formatCurrency(scholarshipAmount);
+            
+            // Initial calculation
+            updateSummary();
+        }
+
+        function initializeReceipt() {
+            document.getElementById('issue-date').textContent = formatDate(new Date('2025-08-15T00:00:00'));
+            randomizeData();
+            
+            const container = document.querySelector('.print-area');
+            container.addEventListener('input', function(event) {
+                const target = event.target;
+                if (target.classList.contains('fee-amount') || target.id === 'scholarship-amount') {
+                    // Use a short timeout to allow the DOM to update before recalculating
+                    setTimeout(updateSummary, 0);
+                }
+            });
+        }
+
+        window.onload = initializeReceipt;
+    </script>
+</body>
+</html>
+
