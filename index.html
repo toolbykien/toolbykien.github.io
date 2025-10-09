@@ -6,7 +6,7 @@
     <title>Tool By Kiên Phạm</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚙️</text></svg>">
     <!-- Tích hợp Tailwind CSS -->
-    <script src="./tailwindcss.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
     <!-- Tích hợp Font Inter từ Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,10 +66,16 @@
         <p id="toast-message">Thao tác thành công!</p>
     </div>
 
-    <!-- Thông báo lỗi cấu hình -->
+    <!-- Thông báo lỗi cấu hình Firebase -->
     <div id="config-warning" class="hidden fixed top-0 left-0 right-0 bg-red-600 p-4 text-center text-white z-50 font-semibold">
         <strong>Lỗi Cấu hình Firebase!</strong> Bạn cần dán đối tượng <code>firebaseConfig</code> của mình vào tệp <code>index.html</code> để ứng dụng hoạt động.
     </div>
+    
+    <!-- Thông báo lỗi xác thực và quyền Firebase -->
+    <div id="auth-error-warning" class="hidden fixed top-0 left-0 right-0 bg-orange-600 p-4 text-center text-white z-50 font-semibold">
+        <!-- Nội dung lỗi sẽ được cập nhật bởi JS -->
+    </div>
+
 
     <div class="w-full max-w-4xl mx-auto">
         <h1 class="text-5xl md:text-6xl font-bold text-center mb-8 bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-500 animate-pulse">
@@ -91,7 +97,7 @@
         <div class="bg-slate-800/60 backdrop-blur-xl rounded-2xl shadow-2xl shadow-purple-500/10 overflow-hidden border border-slate-700">
             <div class="grid grid-cols-[1fr_auto] gap-4 px-6 py-4 border-b border-slate-700">
                 <h2 class="text-sm font-bold uppercase text-gray-400 tracking-wider">Tên</h2>
-                <h2 class="text-sm font-bold uppercase text-gray-400 tracking-wider text-right pr-20">Hành động</h2>
+                <h2 class="text-sm font-bold uppercase text-gray-400 tracking-wider text-center">Hành động</h2>
             </div>
             
             <div id="link-list" class="p-2 flex flex-col gap-2">
@@ -182,12 +188,13 @@
     </div>
 
     <!-- Thư viện tạo mã 2FA -->
-    <script src="./otpauth.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/otpauth@9.2.2/dist/otpauth.umd.min.js"></script>
     
     <!-- Firebase SDKs -->
     <script type="module">
         // Import functions from the SDKs
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-app.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-auth.js";
         import { getFirestore, collection, onSnapshot, addDoc, doc, updateDoc, deleteDoc, query, orderBy, serverTimestamp, writeBatch } from "https://www.gstatic.com/firebasejs/9.15.0/firebase-firestore.js";
 
         // =================================================================================
@@ -207,10 +214,29 @@
             document.getElementById('config-warning').classList.remove('hidden');
         } else {
             const app = initializeApp(firebaseConfig);
+            const auth = getAuth(app);
             const db = getFirestore(app);
             const linksCollection = collection(db, "links");
 
-            document.addEventListener('DOMContentLoaded', () => {
+            async function main() {
+                try {
+                    await signInAnonymously(auth);
+                    console.log("Signed in anonymously");
+                    initializeAppLogic();
+                } catch (error) {
+                    console.error("Firebase Auth Error:", error);
+                    const authErrorWarning = document.getElementById('auth-error-warning');
+                    if (error.code === 'auth/configuration-not-found') {
+                        authErrorWarning.innerHTML = `<strong>Lỗi Xác thực Firebase:</strong> Vui lòng BẬT 'Đăng nhập ẩn danh' (Anonymous Sign-In) trong <a href="https://console.firebase.google.com/" target="_blank" class="underline hover:text-yellow-200">Firebase Console</a> &gt; Authentication &gt; Sign-in method.`;
+                        authErrorWarning.classList.remove('hidden');
+                    } else {
+                        authErrorWarning.innerHTML = `<strong>Lỗi Xác thực:</strong> Không thể kết nối. Vui lòng kiểm tra lại cấu hình và quy tắc bảo mật. (${error.code})`;
+                        authErrorWarning.classList.remove('hidden');
+                    }
+                }
+            }
+
+            function initializeAppLogic() {
                 const animationDuration = 300; // ms, phải khớp với class duration-300 của Tailwind
 
                 // === LOGIC MODAL CHUNG ===
@@ -287,7 +313,6 @@
                     }, 3000);
                 }
                 
-                // Sắp xếp theo trường 'position'
                 const q = query(linksCollection, orderBy("position", "asc"));
 
                 onSnapshot(q, (snapshot) => {
@@ -296,8 +321,15 @@
                     initSortable();
                 }, (error) => {
                     console.error("Error listening to collection: ", error);
-                    if (error.code === 'failed-precondition') {
-                        alert("Lỗi Firestore: Cần phải tạo một chỉ mục (index) cho trường 'position'. Vui lòng kiểm tra Console (F12), tìm lỗi và nhấp vào link Firebase cung cấp để tạo chỉ mục tự động, sau đó tải lại trang.");
+                    const authErrorWarning = document.getElementById('auth-error-warning');
+                    authErrorWarning.classList.remove('hidden'); // Show the banner for any Firestore error
+                    
+                    if (error.code === 'permission-denied') {
+                        authErrorWarning.innerHTML = `<strong>Lỗi Quyền Truy cập Firestore:</strong> Quy tắc bảo mật của bạn không cho phép đọc/ghi dữ liệu. Vui lòng vào <a href="https://console.firebase.google.com/" target="_blank" class="underline hover:text-yellow-200">Firebase Console</a> &gt; Firestore Database &gt; Rules và cập nhật quy tắc của bạn để cho phép người dùng đã xác thực, ví dụ: <code>allow read, write: if request.auth != null;</code>`;
+                    } else if (error.code === 'failed-precondition') {
+                        authErrorWarning.innerHTML = `<strong>Lỗi Firestore:</strong> Cần tạo chỉ mục (index). Vui lòng kiểm tra Console (F12), tìm lỗi và nhấp vào link Firebase cung cấp để tạo chỉ mục tự động, sau đó tải lại trang.`;
+                    } else {
+                        authErrorWarning.innerHTML = `<strong>Lỗi Firestore:</strong> Không thể tải dữ liệu. (${error.code})`;
                     }
                 });
 
@@ -315,23 +347,21 @@
                         const scheme = colorSchemes[link.color || 0];
                         row.innerHTML = `
                             <p class="font-medium text-lg text-gray-200 truncate">${link.name}</p>
-                            <div class="flex items-center gap-4">
+                            <div class="flex items-center justify-end gap-2">
                                 <a href="${link.url}" target="_blank" class="action-button flex items-center gap-2 bg-gradient-to-r ${scheme.base} ${scheme.hover} text-white font-semibold py-2 px-5 rounded-lg transition-all duration-300 transform group-hover:scale-105 group-hover:shadow-lg ${scheme.shadow}">
                                     Truy cập
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transition-transform duration-300 group-hover:translate-x-1" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                                 </a>
-                                <div class="flex items-center gap-1 bg-slate-700/50 rounded-lg p-1">
-                                    <button class="edit-btn p-2 rounded-md hover:bg-slate-600 transition-colors" data-id="${link.id}" data-name="${link.name}" data-url="${link.url}" data-color="${link.color || 0}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                    <button class="delete-btn p-2 rounded-md hover:bg-slate-600 transition-colors" data-id="${link.id}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
-                                    </button>
-                                    <div class="drag-handle text-gray-400 hover:text-white p-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
-                                        </svg>
-                                    </div>
+                                <button class="edit-btn p-2 rounded-md hover:bg-slate-600 transition-colors" data-id="${link.id}" data-name="${link.name}" data-url="${link.url}" data-color="${link.color || 0}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-blue-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path d="M17.414 2.586a2 2 0 00-2.828 0L7 10.172V13h2.828l7.586-7.586a2 2 0 000-2.828z" /><path fill-rule="evenodd" d="M2 6a2 2 0 012-2h4a1 1 0 010 2H4v10h10v-4a1 1 0 112 0v4a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <button class="delete-btn p-2 rounded-md hover:bg-slate-600 transition-colors" data-id="${link.id}">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 pointer-events-none" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clip-rule="evenodd" /></svg>
+                                </button>
+                                <div class="drag-handle text-gray-400 hover:text-white p-2 rounded-md hover:bg-slate-600">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16m-7 6h7" />
+                                    </svg>
                                 </div>
                             </div>
                         `;
@@ -345,10 +375,10 @@
                         sortableInstance.destroy();
                     }
                     sortableInstance = new Sortable(linkListContainer, {
-                        handle: '.drag-handle', // Phần tử để kéo
-                        animation: 200, // Tăng thời gian animation để mượt hơn
-                        ghostClass: 'sortable-ghost', // Class cho placeholder
-                        dragClass: 'sortable-drag', // Class cho mục đang được kéo
+                        handle: '.drag-handle',
+                        animation: 200,
+                        ghostClass: 'sortable-ghost',
+                        dragClass: 'sortable-drag',
                         onEnd: async (evt) => {
                             const items = linkListContainer.querySelectorAll('.link-item');
                             const batch = writeBatch(db);
@@ -452,7 +482,6 @@
                             await updateDoc(doc(db, "links", id), linkData);
                             showToast("Cập nhật thành công!");
                         } else {
-                            // Gán vị trí cho liên kết mới
                             linkData.position = localLinks.length;
                             linkData.createdAt = serverTimestamp();
                             await addDoc(linksCollection, linkData);
@@ -531,7 +560,7 @@
                     const base32Regex = /^[A-Z2-7]+=*$/;
                     if (!base32Regex.test(secret)) {
                         outputDiv.classList.add('hidden');
-                        errorMessageP.textContent = 'Định dạng Secret Key không hợp lệ.';
+                        errorMessageP.textContent = 'Định dạng không hợp lệ. Chỉ dùng ký tự A-Z và 2-7.';
                         return;
                     }
 
@@ -590,12 +619,11 @@
                         });
                     }
                 });
-            });
+            }
+
+            document.addEventListener('DOMContentLoaded', main);
         }
     </script>
 </body>
 </html>
-
-
-
 
