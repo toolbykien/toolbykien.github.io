@@ -54,7 +54,6 @@
             border-color: #ef4444 !important;
             box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
         }
-        /* Style cho ô nhập tên trực tiếp */
         .name-input {
             background: transparent;
             border: 1px solid transparent;
@@ -75,6 +74,29 @@
             border-color: #6366f1;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
         }
+        /* Style cho ô nhập Tag: Cỡ chữ nhỏ hơn một chút (10px) */
+        .tag-input {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: 700;
+            outline: none;
+            transition: all 0.2s ease;
+            text-transform: uppercase;
+            text-align: center;
+            cursor: text;
+        }
+        .tag-input:hover {
+            border-color: #cbd5e1;
+            background: rgba(241, 245, 249, 0.5);
+        }
+        .tag-input:focus {
+            background: #fff;
+            border-color: #6366f1;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
         @keyframes modal-in {
             from { opacity: 0; transform: scale(0.95) translateY(10px); }
             to { opacity: 1; transform: scale(1) translateY(0); }
@@ -148,7 +170,6 @@
             } catch (_) { return false; }
         };
 
-        // Định dạng cho "Bắt đầu": Ngày/Tháng • Giờ:Phút:Giây
         function formatStartDateTime(date) {
             if (!date || isNaN(date.getTime())) return '---';
             const hours = String(date.getHours()).padStart(2, '0');
@@ -159,7 +180,6 @@
             return `${day}/${month} • ${hours}:${minutes}:${seconds}`;
         }
 
-        // Định dạng cho "Hoạt động cuối": Giờ:Phút:Giây
         function formatLastSeenTime(date) {
             if (!date || isNaN(date.getTime())) return '---';
             const hours = String(date.getHours()).padStart(2, '0');
@@ -191,10 +211,7 @@
             if (!/^https?:\/\//i.test(targetUrl)) targetUrl = 'https://' + targetUrl;
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'devices', deviceId);
-                await setDoc(docRef, {
-                    targetUrl: targetUrl,
-                    commandTime: Date.now()
-                }, { merge: true });
+                await setDoc(docRef, { targetUrl, commandTime: Date.now() }, { merge: true });
                 return true;
             } catch (e) { return false; }
         }
@@ -204,7 +221,14 @@
             try {
                 const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'devices', id);
                 await setDoc(docRef, { customName: newName.trim() }, { merge: true });
-            } catch (e) { console.error("Lỗi cập nhật tên:", e); }
+            } catch (e) { console.error(e); }
+        };
+
+        window.saveDeviceTag = async (id, newTag) => {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'devices', id);
+                await setDoc(docRef, { deviceTag: newTag.trim() }, { merge: true });
+            } catch (e) { console.error(e); }
         };
 
         window.handleDelete = (id) => {
@@ -309,12 +333,17 @@
                             <span class="status-dot w-1.5 h-1.5 rounded-full"></span>
                             <span class="status-text text-[9px] font-bold uppercase tracking-widest"></span>
                         </div>
-                        <div class="flex items-center gap-4 mb-6 text-left">
-                            <div class="icon-box w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                        <div class="flex items-start gap-4 mb-6 text-left">
+                            <div class="flex flex-col items-center gap-0.5 shrink-0">
+                                <div class="icon-box w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                </div>
+                                <input type="text" maxlength="8" placeholder="TAG" 
+                                    class="tag-input w-12 text-[10px] font-bold text-slate-800 placeholder:text-slate-200 device-tag"
+                                    onblur="window.saveDeviceTag('${device.id}', this.value)"
+                                    onkeypress="if(event.key==='Enter') this.blur()">
                             </div>
-                            <!-- Mở rộng vùng chứa text, loại bỏ pr-4 để tên dài hơn -->
-                            <div class="overflow-hidden flex-1">
+                            <div class="overflow-hidden flex-1 pt-1">
                                 <input type="text" class="name-input device-name text-xs text-slate-800 font-mono truncate w-full" 
                                     onblur="window.saveDeviceName('${device.id}', this.value)"
                                     onkeypress="if(event.key==='Enter') this.blur()">
@@ -342,6 +371,7 @@
                                 </button>
                             </div>
                         </div>
+                        
                         <div class="mt-auto pt-4 border-t border-slate-200 space-y-2 text-left">
                             <div class="flex justify-between items-center text-[10px]">
                                 <span class="text-slate-400 font-bold uppercase tracking-tighter text-[9px]">Bắt đầu</span>
@@ -371,9 +401,12 @@
                 const videoTimeSpan = card.querySelector('.video-time');
                 const sendBtn = card.querySelector('.send-btn');
                 const nameEl = card.querySelector('.device-name');
+                const tagEl = card.querySelector('.device-tag');
                 const delBtn = card.querySelector('.delete-device-btn');
 
                 if (document.activeElement !== nameEl) nameEl.value = device.customName || device.id;
+                if (document.activeElement !== tagEl) tagEl.value = device.deviceTag || "";
+                
                 activeTitleSpan.textContent = device.activeTitle || "Chưa mở trang nào";
                 
                 if (isOnline && device.videoTime) {
@@ -421,13 +454,15 @@
     <div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
         <div class="bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-2xl w-full max-w-md p-8 animate-modal">
             <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mb-4"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div>
+                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </div>
                 <h3 class="text-xl font-bold text-slate-900">Xác nhận gỡ bỏ</h3>
                 <p class="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest leading-relaxed">Hành động này không thể hoàn tác.<br>Bạn có chắc muốn gỡ thiết bị này?</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="window.closeDeleteModal()" class="flex-1 py-4 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest bg-slate-50 rounded-2xl">Quay lại</button>
-                <button onclick="window.confirmDelete()" class="flex-1 py-4 bg-rose-600 text-white text-[11px] font-bold rounded-2xl hover:bg-rose-700 uppercase tracking-widest">Gỡ vĩnh viễn</button>
+                <button onclick="window.confirmDelete()" class="flex-1 py-4 bg-rose-600 text-white text-[11px] font-bold rounded-2xl hover:bg-rose-700 transition-all uppercase tracking-widest shadow-xl shadow-rose-200">Gỡ vĩnh viễn</button>
             </div>
         </div>
     </div>
@@ -435,13 +470,15 @@
     <div id="cleanup-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
         <div class="bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-2xl w-full max-w-md p-8 animate-modal">
             <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-[1.5rem] flex items-center justify-center mb-4"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
+                <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-[1.5rem] flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
                 <h3 class="text-xl font-bold text-slate-900">Dọn dẹp hệ thống</h3>
                 <p class="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest leading-relaxed">Phát hiện <span id="cleanup-count" class="text-rose-600 font-bold">0</span> thiết bị offline quá 3 giờ.<br>Bạn có muốn gỡ bỏ tất cả không?</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="window.closeCleanupModal()" class="flex-1 py-4 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest bg-slate-50 rounded-2xl">Quay lại</button>
-                <button onclick="window.confirmCleanup()" class="flex-1 py-4 bg-slate-900 text-white text-[11px] font-bold rounded-2xl hover:bg-indigo-600 uppercase tracking-widest">Bắt đầu dọn</button>
+                <button onclick="window.confirmCleanup()" class="flex-1 py-4 bg-slate-900 text-white text-[11px] font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200">Bắt đầu dọn</button>
             </div>
         </div>
     </div>
@@ -452,10 +489,16 @@
                 <div class="w-11 h-11 bg-slate-900 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-slate-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <div><h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">Quản lý thiết bị</h1><p class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em] mt-1">by Kiên Phạm</p></div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">Quản lý thiết bị</h1>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em] mt-1">by Kiên Phạm</p>
+                </div>
             </div>
             <div class="flex items-center gap-6">
-                <button onclick="window.handleCleanup()" class="px-4 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition-all uppercase tracking-widest flex items-center gap-2"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>Dọn dẹp</button>
+                <button onclick="window.handleCleanup()" class="px-4 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition-all uppercase tracking-widest flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Dọn dẹp
+                </button>
                 <div class="bg-white/50 px-6 py-2.5 rounded-2xl border border-white shadow-sm flex items-center gap-8 text-center">
                     <div><p id="stat-total" class="text-sm font-bold text-slate-900 leading-none">0</p><p class="text-[8px] text-slate-400 uppercase font-bold mt-1 tracking-widest">Tổng</p></div>
                     <div class="w-px h-6 bg-slate-100"></div>
@@ -465,8 +508,8 @@
         </div>
     </header>
 
-    <main class="px-8 pb-12 max-w-[1440px] mx-auto"><div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div></main>
+    <main class="px-8 pb-12 max-w-[1440px] mx-auto">
+        <div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+    </main>
 </body>
 </html>
-
-
