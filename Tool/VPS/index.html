@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Device Hub</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            font-family: 'Plus Jakarta Sans', sans-serif; 
+            background-color: #f8fafc;
+            background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.05) 0px, transparent 50%), 
+                              radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.05) 0px, transparent 50%);
+        }
+        .device-card {
+            transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.4s ease, border-color 0.3s ease;
+        }
+        .device-card:hover {
+            transform: translateY(-8px);
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        .status-pulse {
+            position: relative;
+        }
+        .status-pulse::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: inherit;
+            border-radius: inherit;
+            animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(.33); opacity: 1; }
+            80%, 100% { transform: scale(2.5); opacity: 0; }
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+        .shake-error {
+            animation: shake 0.2s ease-in-out 0s 2;
+            border-color: #ef4444 !important;
+            box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.1) !important;
+        }
+        /* Style cho ô nhập tên trực tiếp */
+        .name-input {
+            background: transparent;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            padding: 2px 6px;
+            width: 100%;
+            font-weight: 700;
+            outline: none;
+            transition: all 0.2s ease;
+            cursor: text;
+        }
+        .name-input:hover {
+            border-color: #cbd5e1; /* Hiển thị khung viền khi di chuột vào */
+            background: rgba(241, 245, 249, 0.5);
+        }
+        .name-input:focus {
+            background: #fff;
+            border-color: #6366f1; /* Indigo-500 khi đang sửa */
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        @keyframes modal-in {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .animate-modal {
+            animation: modal-in 0.3s ease-out forwards;
+        }
+        @keyframes toast-in {
+            from { transform: translateY(-100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .animate-toast {
+            animation: toast-in 0.3s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="min-h-screen">
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed top-6 left-1/2 -translate-x-1/2 z-[200] pointer-events-none flex flex-col items-center gap-2"></div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyCI0wVECyeYYPXxs_OoN3So0-C_OsVuhiU",
+            authDomain: "view-yt-bc69d.firebaseapp.com",
+            projectId: "view-yt-bc69d",
+            storageBucket: "view-yt-bc69d.firebasestorage.app",
+            messagingSenderId: "272544421042",
+            appId: "1:272544421042:web:7b96b3b1e054335884e5ab",
+            measurementId: "G-Y8ZWS1NS0Y"
+        };
+
+        const appId = 'extension-remote-control';
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        const auth = getAuth(app);
+
+        let allDevices = [];
+        const ONLINE_THRESHOLD_MS = 30000; 
+        const CLEANUP_THRESHOLD_MS = 3 * 60 * 60 * 1000;
+        let currentDeletingId = null;
+
+        window.showToast = (message, type = 'info') => {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-600' : 'bg-slate-900';
+            
+            toast.className = `animate-toast ${bgClass} text-white px-6 py-3 rounded-2xl shadow-2xl flex items-center gap-3 pointer-events-auto`;
+            toast.innerHTML = `
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span class="text-xs font-bold uppercase tracking-widest">${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateY(-20px)';
+                toast.style.transition = 'all 0.5s ease';
+                setTimeout(() => toast.remove(), 500);
+            }, 3000);
+        };
+
+        const isValidUrl = (string) => {
+            try {
+                const urlToTest = string.includes('://') ? string : 'http://' + string;
+                const url = new URL(urlToTest);
+                return url.hostname.includes('.');
+            } catch (_) { return false; }
+        };
+
+        // Định dạng cho "Bắt đầu": DD/MM • hh:mm:ss
+        function formatStartDateTime(date) {
+            if (!date || isNaN(date.getTime())) return '---';
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            return `${day}/${month} • ${hours}:${minutes}:${seconds}`;
+        }
+
+        // Định dạng cho "Hoạt động cuối": hh:mm:ss
+        function formatLastSeenTime(date) {
+            if (!date || isNaN(date.getTime())) return '---';
+            const hours = String(date.getHours()).padStart(2, '0');
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const seconds = String(date.getSeconds()).padStart(2, '0');
+            return `${hours}:${minutes}:${seconds}`;
+        }
+
+        async function init() {
+            try {
+                await signInAnonymously(auth);
+                onSnapshot(collection(db, 'artifacts', appId, 'public', 'data', 'devices'), (snapshot) => {
+                    allDevices = [];
+                    snapshot.forEach(doc => allDevices.push(doc.data()));
+                    
+                    allDevices.sort((a, b) => {
+                        const getMs = (val) => {
+                            if (!val) return 0;
+                            if (val.toDate) return val.toDate().getTime();
+                            return new Date(val).getTime();
+                        };
+                        return getMs(b.startTime) - getMs(a.startTime);
+                    });
+
+                    renderDashboard();
+                });
+                setInterval(() => renderDashboard(), 5000);
+            } catch (err) { console.error("Firebase Error:", err); }
+        }
+
+        async function sendUrl(deviceId, url) {
+            let targetUrl = url.trim();
+            if (!/^https?:\/\//i.test(targetUrl)) targetUrl = 'https://' + targetUrl;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'devices', deviceId);
+                await setDoc(docRef, {
+                    targetUrl: targetUrl,
+                    commandTime: Date.now()
+                }, { merge: true });
+                return true;
+            } catch (e) { return false; }
+        }
+
+        window.saveDeviceName = async (id, newName) => {
+            if (!newName || newName.trim() === "") return;
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'devices', id);
+                await setDoc(docRef, { customName: newName.trim() }, { merge: true });
+            } catch (e) { console.error("Lỗi cập nhật tên:", e); }
+        };
+
+        window.handleDelete = (id) => {
+            currentDeletingId = id;
+            const modal = document.getElementById('delete-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        };
+
+        window.closeDeleteModal = () => {
+            document.getElementById('delete-modal').classList.replace('flex', 'hidden');
+            currentDeletingId = null;
+        };
+
+        window.confirmDelete = async () => {
+            if (currentDeletingId) {
+                try {
+                    await deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'devices', currentDeletingId));
+                    window.closeDeleteModal();
+                } catch (e) { console.error(e); }
+            }
+        };
+
+        window.handleCleanup = () => {
+            const now = Date.now();
+            const staleDevices = allDevices.filter(device => {
+                const dateObj = device.lastSeen?.toDate ? device.lastSeen.toDate() : new Date(device.lastSeen);
+                return (now - dateObj.getTime() > CLEANUP_THRESHOLD_MS);
+            });
+
+            if (staleDevices.length === 0) {
+                window.showToast("Dữ liệu sạch: Không có máy offline quá 3h");
+                return;
+            }
+
+            const modal = document.getElementById('cleanup-modal');
+            document.getElementById('cleanup-count').textContent = staleDevices.length;
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            window.confirmCleanup = async () => {
+                try {
+                    const promises = staleDevices.map(device => 
+                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'devices', device.id))
+                    );
+                    await Promise.all(promises);
+                    window.closeCleanupModal();
+                    window.showToast(`Đã dọn dẹp ${staleDevices.length} thiết bị`);
+                } catch (e) { console.error("Cleanup error:", e); }
+            };
+        };
+
+        window.closeCleanupModal = () => {
+            document.getElementById('cleanup-modal').classList.replace('flex', 'hidden');
+        };
+
+        window.handleSend = async (id) => {
+            const input = document.getElementById(`input-${id}`);
+            const btn = document.getElementById(`btn-${id}`);
+            const val = input.value.trim();
+            if (!val) return;
+            if (!isValidUrl(val)) {
+                input.classList.add('shake-error');
+                setTimeout(() => input.classList.remove('shake-error'), 1000);
+                return;
+            }
+            btn.disabled = true;
+            const success = await sendUrl(id, val);
+            if (success) {
+                input.value = '';
+                btn.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
+                setTimeout(() => { 
+                    btn.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3"></path></svg>`; 
+                    btn.disabled = false; 
+                }, 1500);
+            } else { btn.disabled = false; }
+        };
+
+        function renderDashboard() {
+            const container = document.getElementById('device-grid');
+            const totalEl = document.getElementById('stat-total');
+            const onlineEl = document.getElementById('stat-online');
+            const now = new Date();
+
+            totalEl.textContent = allDevices.length;
+            let onlineCount = 0;
+
+            const currentIds = allDevices.map(d => d.id);
+            Array.from(container.children).forEach(card => {
+                const cardId = card.getAttribute('data-id');
+                if (cardId && !currentIds.includes(cardId)) card.remove();
+            });
+
+            allDevices.forEach(device => {
+                const ls = device.lastSeen?.toDate ? device.lastSeen.toDate() : new Date(device.lastSeen);
+                const st = device.startTime?.toDate ? device.startTime.toDate() : (device.startTime ? new Date(device.startTime) : null);
+                
+                const isOnline = ls && (now - ls < ONLINE_THRESHOLD_MS);
+                if (isOnline) onlineCount++;
+
+                let card = document.querySelector(`[data-id="${device.id}"]`);
+
+                if (!card) {
+                    card = document.createElement('div');
+                    card.setAttribute('data-id', device.id);
+                    card.className = `device-card bg-white rounded-[2rem] border-2 overflow-hidden flex flex-col p-6 relative`;
+                    
+                    card.innerHTML = `
+                        <div class="status-badge absolute top-3.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full">
+                            <span class="status-dot w-1.5 h-1.5 rounded-full"></span>
+                            <span class="status-text text-[9px] font-bold uppercase tracking-widest"></span>
+                        </div>
+                        <div class="flex items-center gap-4 mb-6 text-left">
+                            <div class="icon-box w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                                </svg>
+                            </div>
+                            <div class="overflow-hidden pr-4 flex-1">
+                                <div class="flex items-center gap-1 relative">
+                                    <input type="text" class="name-input device-name text-xs text-slate-800 font-mono truncate max-w-[200px]" 
+                                        value="${device.customName || device.id}"
+                                        onblur="window.saveDeviceName('${device.id}', this.value)"
+                                        onkeypress="if(event.key==='Enter') this.blur()">
+                                </div>
+                                <div class="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5 px-1.5">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2 2 2 0 012 2v.653M3 20h18M3 10a9 9 0 1118 0 9 9 0 01-18 0z"></path></svg>
+                                    <span class="device-ip">${device.ip || '0.0.0.0'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="px-1 mb-4">
+                            <p class="text-[8px] font-bold text-slate-300 uppercase tracking-widest mb-1">Trang đang xem</p>
+                            <div class="bg-slate-50/50 px-2 py-1.5 rounded-lg border border-slate-100/50 min-h-[40px] flex items-center">
+                                <p class="active-title text-[10px] text-slate-500 font-medium line-clamp-2 italic leading-relaxed">Đang tải...</p>
+                            </div>
+                        </div>
+                        <div class="space-y-2 mb-6 text-left">
+                            <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Điều khiển từ xa</label>
+                            <div class="flex gap-2">
+                                <input type="text" placeholder="Nhập URL..." class="flex-1 text-xs px-4 py-3 bg-slate-50 rounded-2xl outline-none border-2 border-slate-200 hover:border-indigo-200 focus:border-indigo-400 focus:bg-white transition-all shadow-inner" id="input-${device.id}" onkeypress="if(event.key==='Enter') window.handleSend('${device.id}')">
+                                <button onclick="window.handleSend('${device.id}')" class="send-btn w-10 h-10 bg-slate-900 text-white flex items-center justify-center rounded-2xl hover:bg-indigo-600 disabled:opacity-20 shadow-lg transition-all" id="btn-${device.id}">
+                                    <svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="mt-auto pt-4 border-t border-slate-100 space-y-2 text-left">
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="text-slate-400 font-bold uppercase tracking-tighter text-[9px]">Bắt đầu</span>
+                                <span class="start-time text-indigo-500 font-bold"></span>
+                            </div>
+                            <div class="flex justify-between items-center text-[10px]">
+                                <span class="text-slate-400 font-bold uppercase tracking-tighter text-[9px]">Hoạt động cuối</span>
+                                <span class="last-seen text-slate-600 font-bold"></span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2">
+                                <button class="delete-device-btn text-[9px] font-bold text-slate-300 hover:text-rose-500 transition-colors uppercase">Gỡ bỏ thiết bị</button>
+                                <span class="text-[7px] text-slate-400 font-mono tracking-tighter">${device.id}</span>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(card);
+                }
+
+                const badge = card.querySelector('.status-badge');
+                const dot = card.querySelector('.status-dot');
+                const text = card.querySelector('.status-text');
+                const iconBox = card.querySelector('.icon-box');
+                const ipSpan = card.querySelector('.device-ip');
+                const lastSeenSpan = card.querySelector('.last-seen');
+                const startTimeSpan = card.querySelector('.start-time');
+                const activeTitleSpan = card.querySelector('.active-title');
+                const sendBtn = card.querySelector('.send-btn');
+                const nameEl = card.querySelector('.device-name');
+                const delBtn = card.querySelector('.delete-device-btn');
+
+                const displayName = device.customName || device.id;
+                if (document.activeElement !== nameEl && nameEl.value !== displayName) nameEl.value = displayName;
+                
+                activeTitleSpan.textContent = device.activeTitle || "Chưa mở trang nào";
+                delBtn.onclick = () => window.handleDelete(device.id);
+
+                if (isOnline) {
+                    card.classList.remove('border-slate-200', 'shadow-md');
+                    card.classList.add('border-emerald-500', 'bg-emerald-50/10', 'shadow-lg', 'shadow-emerald-200/50');
+                    
+                    badge.className = 'status-badge absolute top-3.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-sm';
+                    dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-white status-pulse';
+                    text.textContent = 'Online';
+                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200 flex items-center justify-center transition-all duration-300';
+                    sendBtn.disabled = false;
+                } else {
+                    card.classList.remove('border-emerald-500', 'bg-emerald-50/10', 'shadow-lg', 'shadow-emerald-200/50');
+                    card.classList.add('border-slate-200', 'shadow-md');
+                    
+                    badge.className = 'status-badge absolute top-3.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500';
+                    dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-slate-400';
+                    text.textContent = 'Offline';
+                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center transition-all duration-300';
+                    sendBtn.disabled = true;
+                }
+
+                if (ipSpan.textContent !== device.ip) ipSpan.textContent = device.ip || '0.0.0.0';
+                
+                startTimeSpan.textContent = formatStartDateTime(st); 
+                lastSeenSpan.textContent = formatLastSeenTime(ls);   
+            });
+            onlineEl.textContent = onlineCount;
+        }
+        init();
+    </script>
+
+    <!-- Modal Xác nhận xóa từng máy -->
+    <div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
+        <div class="bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-2xl w-full max-w-md p-8 animate-modal">
+            <div class="flex flex-col items-center text-center mb-8">
+                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900">Xác nhận gỡ bỏ</h3>
+                <p class="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest leading-relaxed">Hành động này không thể hoàn tác.<br>Bạn có chắc muốn gỡ thiết bị này?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.closeDeleteModal()" class="flex-1 py-4 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest bg-slate-50 rounded-2xl">Quay lại</button>
+                <button onclick="window.confirmDelete()" class="flex-1 py-4 bg-rose-600 text-white text-[11px] font-bold rounded-2xl hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest active:scale-95">Gỡ vĩnh viễn</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Dọn dẹp hàng loạt -->
+    <div id="cleanup-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
+        <div class="bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-2xl w-full max-w-md p-8 animate-modal">
+            <div class="flex flex-col items-center text-center mb-8">
+                <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-[1.5rem] flex items-center justify-center mb-4">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                </div>
+                <h3 class="text-xl font-bold text-slate-900">Dọn dẹp hệ thống</h3>
+                <p class="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest leading-relaxed">Phát hiện <span id="cleanup-count" class="text-rose-600 font-bold">0</span> thiết bị offline quá 3 giờ.<br>Bạn có muốn gỡ bỏ tất cả không?</p>
+            </div>
+            <div class="flex gap-3">
+                <button onclick="window.closeCleanupModal()" class="flex-1 py-4 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest bg-slate-50 rounded-2xl">Quay lại</button>
+                <button onclick="window.confirmCleanup()" class="flex-1 py-4 bg-slate-900 text-white text-[11px] font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 uppercase tracking-widest active:scale-95">Bắt đầu dọn</button>
+            </div>
+        </div>
+    </div>
+
+    <header class="glass sticky top-0 z-50 px-8 py-5 mb-8">
+        <div class="max-w-[1440px] mx-auto flex items-center justify-between">
+            <div class="flex items-center gap-4">
+                <div class="w-11 h-11 bg-slate-900 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-slate-200">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">Smart Hub</h1>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em] mt-1">Control Panel</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-6">
+                <button onclick="window.handleCleanup()" class="px-4 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition-all uppercase tracking-widest flex items-center gap-2">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                    Dọn dẹp
+                </button>
+                <div class="bg-white/50 px-6 py-2.5 rounded-2xl border border-white shadow-sm flex items-center gap-8 text-center">
+                    <div><p id="stat-total" class="text-sm font-bold text-slate-900 leading-none">0</p><p class="text-[8px] text-slate-400 uppercase font-bold mt-1 tracking-widest">Tổng</p></div>
+                    <div class="w-px h-6 bg-slate-100"></div>
+                    <div><p id="stat-online" class="text-sm font-bold text-emerald-600 leading-none">0</p><p class="text-[8px] text-slate-400 uppercase font-bold mt-1 tracking-widest">Online</p></div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="px-8 pb-12 max-w-[1440px] mx-auto">
+        <div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
+    </main>
+</body>
+</html>
