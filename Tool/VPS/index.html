@@ -3,9 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Device Hub</title>
-
-    <!-- Thêm biểu tượng Favicon (Tia sét đồng bộ với logo) -->
+    <title>Smart Device Hub - Premium Dashboard</title>
+    
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 
     <script src="https://cdn.tailwindcss.com"></script>
@@ -60,7 +59,7 @@
             background: transparent;
             border: 1px solid transparent;
             border-radius: 6px;
-            padding: 2px 6px;
+            padding: 2px 4px;
             width: 100%;
             font-weight: 700;
             outline: none;
@@ -68,12 +67,12 @@
             cursor: text;
         }
         .name-input:hover {
-            border-color: #cbd5e1; /* Hiển thị khung viền khi di chuột vào */
+            border-color: #cbd5e1;
             background: rgba(241, 245, 249, 0.5);
         }
         .name-input:focus {
             background: #fff;
-            border-color: #6366f1; /* Indigo-500 khi đang sửa */
+            border-color: #6366f1;
             box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
         }
         @keyframes modal-in {
@@ -149,7 +148,7 @@
             } catch (_) { return false; }
         };
 
-        // Định dạng cho "Bắt đầu": DD/MM • hh:mm:ss
+        // Định dạng cho "Bắt đầu": Ngày/Tháng • Giờ:Phút:Giây
         function formatStartDateTime(date) {
             if (!date || isNaN(date.getTime())) return '---';
             const hours = String(date.getHours()).padStart(2, '0');
@@ -160,7 +159,7 @@
             return `${day}/${month} • ${hours}:${minutes}:${seconds}`;
         }
 
-        // Định dạng cho "Hoạt động cuối": hh:mm:ss
+        // Định dạng cho "Hoạt động cuối": Giờ:Phút:Giây
         function formatLastSeenTime(date) {
             if (!date || isNaN(date.getTime())) return '---';
             const hours = String(date.getHours()).padStart(2, '0');
@@ -177,11 +176,7 @@
                     snapshot.forEach(doc => allDevices.push(doc.data()));
                     
                     allDevices.sort((a, b) => {
-                        const getMs = (val) => {
-                            if (!val) return 0;
-                            if (val.toDate) return val.toDate().getTime();
-                            return new Date(val).getTime();
-                        };
+                        const getMs = (v) => v?.toDate ? v.toDate().getTime() : new Date(v).getTime() || 0;
                         return getMs(b.startTime) - getMs(a.startTime);
                     });
 
@@ -252,9 +247,7 @@
 
             window.confirmCleanup = async () => {
                 try {
-                    const promises = staleDevices.map(device => 
-                        deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'devices', device.id))
-                    );
+                    const promises = staleDevices.map(device => deleteDoc(doc(db, 'artifacts', appId, 'public', 'data', 'devices', device.id)));
                     await Promise.all(promises);
                     window.closeCleanupModal();
                     window.showToast(`Đã dọn dẹp ${staleDevices.length} thiết bị`);
@@ -270,22 +263,20 @@
             const input = document.getElementById(`input-${id}`);
             const btn = document.getElementById(`btn-${id}`);
             const val = input.value.trim();
-            if (!val) return;
-            if (!isValidUrl(val)) {
+            if (!val || !isValidUrl(val)) {
                 input.classList.add('shake-error');
                 setTimeout(() => input.classList.remove('shake-error'), 1000);
                 return;
             }
             btn.disabled = true;
-            const success = await sendUrl(id, val);
-            if (success) {
+            if (await sendUrl(id, val)) {
                 input.value = '';
                 btn.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
                 setTimeout(() => { 
                     btn.innerHTML = `<svg class="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 5l7 7m0 0l-7 7m7-7H3"></path></svg>`; 
                     btn.disabled = false; 
                 }, 1500);
-            } else { btn.disabled = false; }
+            } else btn.disabled = false;
         };
 
         function renderDashboard() {
@@ -293,7 +284,6 @@
             const totalEl = document.getElementById('stat-total');
             const onlineEl = document.getElementById('stat-online');
             const now = new Date();
-
             totalEl.textContent = allDevices.length;
             let onlineCount = 0;
 
@@ -306,48 +296,44 @@
             allDevices.forEach(device => {
                 const ls = device.lastSeen?.toDate ? device.lastSeen.toDate() : new Date(device.lastSeen);
                 const st = device.startTime?.toDate ? device.startTime.toDate() : (device.startTime ? new Date(device.startTime) : null);
-                
                 const isOnline = ls && (now - ls < ONLINE_THRESHOLD_MS);
                 if (isOnline) onlineCount++;
 
                 let card = document.querySelector(`[data-id="${device.id}"]`);
-
                 if (!card) {
                     card = document.createElement('div');
                     card.setAttribute('data-id', device.id);
                     card.className = `device-card bg-white rounded-[2rem] border-2 overflow-hidden flex flex-col p-6 relative`;
-                    
                     card.innerHTML = `
-                        <div class="status-badge absolute top-3.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full">
+                        <div class="status-badge absolute top-[7px] right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full">
                             <span class="status-dot w-1.5 h-1.5 rounded-full"></span>
                             <span class="status-text text-[9px] font-bold uppercase tracking-widest"></span>
                         </div>
                         <div class="flex items-center gap-4 mb-6 text-left">
                             <div class="icon-box w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300">
-                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
-                                </svg>
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
                             </div>
-                            <div class="overflow-hidden pr-4 flex-1">
-                                <div class="flex items-center gap-1 relative">
-                                    <input type="text" class="name-input device-name text-xs text-slate-800 font-mono truncate max-w-[200px]" 
-                                        value="${device.customName || device.id}"
-                                        onblur="window.saveDeviceName('${device.id}', this.value)"
-                                        onkeypress="if(event.key==='Enter') this.blur()">
-                                </div>
-                                <div class="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5 px-1.5">
+                            <!-- Mở rộng vùng chứa text, loại bỏ pr-4 để tên dài hơn -->
+                            <div class="overflow-hidden flex-1">
+                                <input type="text" class="name-input device-name text-xs text-slate-800 font-mono truncate w-full" 
+                                    onblur="window.saveDeviceName('${device.id}', this.value)"
+                                    onkeypress="if(event.key==='Enter') this.blur()">
+                                <div class="text-[10px] text-slate-400 font-medium flex items-center gap-1 mt-0.5 px-1">
                                     <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2 2 2 0 012 2v.653M3 20h18M3 10a9 9 0 1118 0 9 9 0 01-18 0z"></path></svg>
                                     <span class="device-ip">${device.ip || '0.0.0.0'}</span>
                                 </div>
                             </div>
                         </div>
-                        <div class="px-1 mb-4">
-                            <p class="text-[8px] font-bold text-slate-300 uppercase tracking-widest mb-1">Trang đang xem</p>
+                        <div class="px-1 mb-4 flex flex-col">
+                            <div class="flex justify-between items-center mb-1">
+                                <p class="text-[8px] font-bold text-slate-300 uppercase tracking-widest">Trang đang xem</p>
+                                <p class="video-time text-[9px] font-bold font-mono transition-all duration-300"></p>
+                            </div>
                             <div class="bg-slate-50/50 px-2 py-1.5 rounded-lg border border-slate-100/50 min-h-[40px] flex items-center">
                                 <p class="active-title text-[10px] text-slate-500 font-medium line-clamp-2 italic leading-relaxed">Đang tải...</p>
                             </div>
                         </div>
-                        <div class="space-y-2 mb-6 text-left">
+                        <div class="space-y-1 mb-6 text-left">
                             <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest px-1">Điều khiển từ xa</label>
                             <div class="flex gap-2">
                                 <input type="text" placeholder="Nhập URL..." class="flex-1 text-xs px-4 py-3 bg-slate-50 rounded-2xl outline-none border-2 border-slate-200 hover:border-indigo-200 focus:border-indigo-400 focus:bg-white transition-all shadow-inner" id="input-${device.id}" onkeypress="if(event.key==='Enter') window.handleSend('${device.id}')">
@@ -367,7 +353,7 @@
                             </div>
                             <div class="flex justify-between items-center pt-2">
                                 <button class="delete-device-btn text-[9px] font-bold text-slate-300 hover:text-rose-500 transition-colors uppercase">Gỡ bỏ thiết bị</button>
-                                <span class="text-[7px] text-slate-400 font-mono tracking-tighter">${device.id}</span>
+                                <span class="text-[8px] text-slate-400 font-mono tracking-tighter">RAW ID: ${device.id}</span>
                             </div>
                         </div>
                     `;
@@ -382,76 +368,80 @@
                 const lastSeenSpan = card.querySelector('.last-seen');
                 const startTimeSpan = card.querySelector('.start-time');
                 const activeTitleSpan = card.querySelector('.active-title');
+                const videoTimeSpan = card.querySelector('.video-time');
                 const sendBtn = card.querySelector('.send-btn');
                 const nameEl = card.querySelector('.device-name');
                 const delBtn = card.querySelector('.delete-device-btn');
 
-                const displayName = device.customName || device.id;
-                if (document.activeElement !== nameEl && nameEl.value !== displayName) nameEl.value = displayName;
-                
+                if (document.activeElement !== nameEl) nameEl.value = device.customName || device.id;
                 activeTitleSpan.textContent = device.activeTitle || "Chưa mở trang nào";
+                
+                if (isOnline && device.videoTime) {
+                    videoTimeSpan.textContent = device.videoTime;
+                    videoTimeSpan.classList.remove('hidden');
+                    const parts = device.videoTime.split(' / ');
+                    if (parts.length === 2 && parts[0] === parts[1] && parts[0] !== "00:00") {
+                        videoTimeSpan.className = "video-time text-[9px] font-bold font-mono bg-rose-600 text-white px-1.5 py-0.5 rounded shadow-sm";
+                    } else {
+                        videoTimeSpan.className = "video-time text-[9px] font-bold font-mono text-indigo-500";
+                    }
+                } else {
+                    videoTimeSpan.classList.add('hidden');
+                }
+
                 delBtn.onclick = () => window.handleDelete(device.id);
 
                 if (isOnline) {
                     card.classList.remove('border-slate-200', 'shadow-md');
                     card.classList.add('border-emerald-500', 'bg-emerald-50/10', 'shadow-lg', 'shadow-emerald-200/50');
-                    
-                    badge.className = 'status-badge absolute top-3.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-sm';
+                    badge.className = 'status-badge absolute top-[7px] right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-600 text-white shadow-sm';
                     dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-white status-pulse';
                     text.textContent = 'Online';
-                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200 flex items-center justify-center transition-all duration-300';
+                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200 flex items-center justify-center';
                     sendBtn.disabled = false;
                 } else {
                     card.classList.remove('border-emerald-500', 'bg-emerald-50/10', 'shadow-lg', 'shadow-emerald-200/50');
                     card.classList.add('border-slate-200', 'shadow-md');
-                    
-                    badge.className = 'status-badge absolute top-3.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500';
+                    badge.className = 'status-badge absolute top-[7px] right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-100 text-slate-500';
                     dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-slate-400';
                     text.textContent = 'Offline';
-                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center transition-all duration-300';
+                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-slate-100 text-slate-400 flex items-center justify-center';
                     sendBtn.disabled = true;
                 }
-
                 if (ipSpan.textContent !== device.ip) ipSpan.textContent = device.ip || '0.0.0.0';
-                
-                startTimeSpan.textContent = formatStartDateTime(st); 
-                lastSeenSpan.textContent = formatLastSeenTime(ls);   
+                startTimeSpan.textContent = formatStartDateTime(st);
+                lastSeenSpan.textContent = formatLastSeenTime(ls);
             });
             onlineEl.textContent = onlineCount;
         }
         init();
     </script>
 
-    <!-- Modal Xác nhận xóa từng máy -->
+    <!-- Modals -->
     <div id="delete-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
         <div class="bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-2xl w-full max-w-md p-8 animate-modal">
             <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                </div>
+                <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mb-4"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg></div>
                 <h3 class="text-xl font-bold text-slate-900">Xác nhận gỡ bỏ</h3>
                 <p class="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest leading-relaxed">Hành động này không thể hoàn tác.<br>Bạn có chắc muốn gỡ thiết bị này?</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="window.closeDeleteModal()" class="flex-1 py-4 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest bg-slate-50 rounded-2xl">Quay lại</button>
-                <button onclick="window.confirmDelete()" class="flex-1 py-4 bg-rose-600 text-white text-[11px] font-bold rounded-2xl hover:bg-rose-700 transition-all shadow-xl shadow-rose-200 uppercase tracking-widest active:scale-95">Gỡ vĩnh viễn</button>
+                <button onclick="window.confirmDelete()" class="flex-1 py-4 bg-rose-600 text-white text-[11px] font-bold rounded-2xl hover:bg-rose-700 uppercase tracking-widest">Gỡ vĩnh viễn</button>
             </div>
         </div>
     </div>
 
-    <!-- Modal Dọn dẹp hàng loạt -->
     <div id="cleanup-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm px-4">
         <div class="bg-white rounded-[2.5rem] border-2 border-slate-100 shadow-2xl w-full max-w-md p-8 animate-modal">
             <div class="flex flex-col items-center text-center mb-8">
-                <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-[1.5rem] flex items-center justify-center mb-4">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
-                </div>
+                <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-[1.5rem] flex items-center justify-center mb-4"><svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg></div>
                 <h3 class="text-xl font-bold text-slate-900">Dọn dẹp hệ thống</h3>
                 <p class="text-xs text-slate-400 mt-2 font-medium uppercase tracking-widest leading-relaxed">Phát hiện <span id="cleanup-count" class="text-rose-600 font-bold">0</span> thiết bị offline quá 3 giờ.<br>Bạn có muốn gỡ bỏ tất cả không?</p>
             </div>
             <div class="flex gap-3">
                 <button onclick="window.closeCleanupModal()" class="flex-1 py-4 text-[11px] font-bold text-slate-400 hover:text-slate-600 transition-colors uppercase tracking-widest bg-slate-50 rounded-2xl">Quay lại</button>
-                <button onclick="window.confirmCleanup()" class="flex-1 py-4 bg-slate-900 text-white text-[11px] font-bold rounded-2xl hover:bg-indigo-600 transition-all shadow-xl shadow-slate-200 uppercase tracking-widest active:scale-95">Bắt đầu dọn</button>
+                <button onclick="window.confirmCleanup()" class="flex-1 py-4 bg-slate-900 text-white text-[11px] font-bold rounded-2xl hover:bg-indigo-600 uppercase tracking-widest">Bắt đầu dọn</button>
             </div>
         </div>
     </div>
@@ -462,16 +452,10 @@
                 <div class="w-11 h-11 bg-slate-900 rounded-[1.25rem] flex items-center justify-center text-white shadow-xl shadow-slate-200">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
                 </div>
-                <div>
-                    <h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">Smart Hub</h1>
-                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em] mt-1">Control Panel</p>
-                </div>
+                <div><h1 class="text-lg font-bold text-slate-900 tracking-tight leading-none">Smart Hub</h1><p class="text-[10px] text-slate-400 uppercase font-bold tracking-[0.2em] mt-1">Control Panel</p></div>
             </div>
             <div class="flex items-center gap-6">
-                <button onclick="window.handleCleanup()" class="px-4 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition-all uppercase tracking-widest flex items-center gap-2">
-                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    Dọn dẹp
-                </button>
+                <button onclick="window.handleCleanup()" class="px-4 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-[10px] font-bold text-slate-500 hover:text-indigo-600 transition-all uppercase tracking-widest flex items-center gap-2"><svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>Dọn dẹp</button>
                 <div class="bg-white/50 px-6 py-2.5 rounded-2xl border border-white shadow-sm flex items-center gap-8 text-center">
                     <div><p id="stat-total" class="text-sm font-bold text-slate-900 leading-none">0</p><p class="text-[8px] text-slate-400 uppercase font-bold mt-1 tracking-widest">Tổng</p></div>
                     <div class="w-px h-6 bg-slate-100"></div>
@@ -481,9 +465,6 @@
         </div>
     </header>
 
-    <main class="px-8 pb-12 max-w-[1440px] mx-auto">
-        <div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div>
-    </main>
+    <main class="px-8 pb-12 max-w-[1440px] mx-auto"><div id="device-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8"></div></main>
 </body>
-
 </html>
