@@ -54,7 +54,6 @@
             border-color: rgba(255, 255, 255, 0.05);
         }
 
-        /* Original Status Pulse */
         .status-pulse {
             position: relative;
         }
@@ -146,7 +145,9 @@
 
         let allDevices = [];
         let previousDeviceIds = new Set();
-        const ONLINE_THRESHOLD_MS = 60000; 
+        
+        // Cấu hình ngưỡng Online linh hoạt hơn
+        const ONLINE_THRESHOLD_MS = 90000; // 90 giây
         const CLEANUP_THRESHOLD_MS = 60 * 60 * 1000;
         let currentDeletingId = null;
 
@@ -234,6 +235,8 @@
                         renderDashboard(false);
                     }
                 }, (error) => console.error("Snapshot error:", error));
+                
+                // Tăng tần suất cập nhật định kỳ lên 5 giây để theo dõi Offline nhạy bén hơn
                 setInterval(() => renderDashboard(false), 15000);
             } catch (err) { console.error("Firebase Error:", err); }
         }
@@ -337,26 +340,31 @@
             const totalEl = document.getElementById('stat-total');
             const onlineEl = document.getElementById('stat-online');
             const now = new Date();
+            
             totalEl.textContent = allDevices.length;
             let onlineCount = 0;
+            
             if (forceRebuild) container.innerHTML = '';
+            
             allDevices.forEach(device => {
-                const ls = device.lastSeen?.toDate ? device.lastSeen.toDate() : new Date(device.lastSeen);
-                const st = device.startTime?.toDate ? device.startTime.toDate() : (device.startTime ? new Date(device.startTime) : null);
-                const isOnline = ls && (now - ls < ONLINE_THRESHOLD_MS);
+                const lsMs = getTimestamp(device.lastSeen);
+                const ls = new Date(lsMs);
+                const st = new Date(getTimestamp(device.startTime));
+                
+                // Kiểm tra trạng thái Online dựa trên thời gian thực hiện tại
+                const isOnline = lsMs && (now.getTime() - lsMs < ONLINE_THRESHOLD_MS);
                 if (isOnline) onlineCount++;
+                
                 let card = document.querySelector(`[data-id="${device.id}"]`);
                 if (!card) {
                     card = document.createElement('div');
                     card.setAttribute('data-id', device.id);
                     card.className = `device-card bg-white dark:bg-slate-900 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 overflow-visible flex flex-col p-6 relative mt-4`;
                     card.innerHTML = `
-                        <!-- Status Badge: positioned to overlap top border -->
                         <div class="status-badge absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full z-10 shadow-md transition-all duration-300">
                             <span class="status-dot w-1.5 h-1.5 rounded-full"></span>
                             <span class="status-text text-[9px] font-black uppercase tracking-widest"></span>
                         </div>
-                        
                         <div class="flex items-start gap-4 mb-3 text-left">
                             <div class="flex flex-col items-center justify-center gap-0.5 shrink-0">
                                 <div class="icon-box w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-300">
@@ -425,6 +433,7 @@
                 if (document.activeElement !== nameEl) nameEl.value = device.customName || device.id;
                 if (document.activeElement !== tagEl) tagEl.value = device.deviceTag || "";
                 activeTitleSpan.textContent = device.activeTitle || "Chưa mở trang nào";
+                
                 if (isOnline && device.videoTime) {
                     videoTimeSpan.textContent = device.videoTime;
                     videoTimeSpan.classList.remove('hidden');
@@ -437,36 +446,33 @@
                 } else {
                     videoTimeSpan.classList.add('hidden');
                 }
+                
                 delBtn.onclick = () => window.handleDelete(device.id);
 
-                // Cấu hình vị trí badge cố định nằm giữa viền trên (nhỏ hơn px-3 py-1)
                 const badgePosClasses = 'status-badge absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-1.5 px-3 py-1 rounded-full z-10 shadow-md transition-all duration-300';
 
                 if (isOnline) {
                     card.classList.remove('border-slate-200', 'dark:border-slate-800', 'shadow-md');
                     card.classList.add('border-emerald-500', 'bg-emerald-50/10', 'dark:bg-emerald-950/20', 'shadow-xl', 'shadow-emerald-200/50', 'dark:shadow-emerald-900/20');
-                    
+                    badge.classList.remove('hidden');
                     badge.className = `${badgePosClasses} bg-emerald-600 text-white`;
                     dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-white status-pulse';
                     text.textContent = 'ONLINE';
-                    
                     iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-emerald-600 text-white shadow-lg shadow-emerald-200 dark:shadow-emerald-900/40 flex items-center justify-center';
                     sendBtn.disabled = false;
                 } else {
-                  //  card.classList.remove('border-emerald-500', 'bg-emerald-50/10', 'dark:bg-emerald-950/20', 'shadow-xl', 'shadow-emerald-200/50', 'dark:shadow-emerald-900/20');
-                  //  card.classList.add('border-slate-200', 'dark:border-slate-800', 'shadow-md');
-                    
-                  //  badge.className = `${badgePosClasses} bg-slate-200 dark:bg-slate-800 text-slate-500 dark:text-slate-400 border border-slate-300 dark:border-slate-700`;
-                  //  dot.className = 'status-dot w-1.5 h-1.5 rounded-full bg-slate-400 dark:bg-slate-600';
-                  //  text.textContent = 'OFFLINE';
-                    
-                  //  iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center';
-                  //  sendBtn.disabled = true;
+                    card.classList.remove('border-emerald-500', 'bg-emerald-50/10', 'dark:bg-emerald-950/20', 'shadow-xl', 'shadow-emerald-200/50', 'dark:shadow-emerald-900/20');
+                    card.classList.add('border-slate-200', 'dark:border-slate-800', 'shadow-md');
+                    badge.classList.add('hidden'); // Ẩn badge khi Offline theo yêu cầu trước đó
+                    iconBox.className = 'icon-box w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 dark:text-slate-500 flex items-center justify-center';
+                    sendBtn.disabled = true;
                 }
+                
                 if (ipSpan.textContent !== device.ip) ipSpan.textContent = device.ip || '0.0.0.0';
                 startTimeSpan.textContent = formatStartDateTime(st);
                 lastSeenSpan.textContent = formatLastSeenTime(ls);
             });
+            
             onlineEl.textContent = onlineCount;
         }
         init();
@@ -481,7 +487,7 @@
                 </div>
                 <h3 class="text-lg font-bold text-slate-900 dark:text-white">Xác nhận gỡ bỏ</h3>
                 <p class="text-[11px] text-slate-400 dark:text-slate-500 mt-1.5 font-medium leading-relaxed">Hành động này không thể hoàn tác.<br>Bạn có chắc muốn gỡ thiết bị này?</p>
-                </div>
+            </div>
             <div class="flex gap-2">
                 <button onclick="window.closeDeleteModal()" class="flex-1 py-2.5 text-[10px] font-bold text-slate-500 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors uppercase tracking-widest">Hủy</button>
                 <button onclick="window.confirmDelete()" class="flex-1 py-2.5 bg-rose-600 text-white text-[10px] font-bold rounded-xl hover:bg-rose-700 transition-all uppercase tracking-widest shadow-lg shadow-rose-200/50 dark:shadow-none">Xác nhận</button>
