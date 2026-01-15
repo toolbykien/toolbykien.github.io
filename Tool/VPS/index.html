@@ -119,6 +119,26 @@
         .animate-toast {
             animation: toast-in 0.3s ease-out forwards;
         }
+
+        /* --- Toggle Switch Styling --- */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 32px;
+            height: 18px;
+        }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #cbd5e1; transition: .4s; border-radius: 18px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 14px; width: 14px; left: 2px; bottom: 2px;
+            background-color: white; transition: .4s; border-radius: 50%;
+        }
+        input:checked + .slider { background-color: #6366f1; }
+        input:checked + .slider:before { transform: translateX(14px); }
+        /* ---------------------------- */
     </style>
 </head>
 <body class="min-h-screen text-slate-900 dark:text-slate-100">
@@ -127,7 +147,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         const firebaseConfig = {
@@ -214,6 +234,15 @@
             return `${hours}:${minutes}:${seconds}`;
         }
 
+        // --- Hàm cập nhật Auto Next YT ---
+        window.toggleAutoClick = async (id, isEnabled) => {
+            try {
+                const docRef = doc(db, 'artifacts', appId, 'public', 'data', 'devices', id);
+                await updateDoc(docRef, { autoClickYT: isEnabled });
+                window.showToast(`Auto Next: ${isEnabled ? 'BẬT' : 'TẮT'}`);
+            } catch (e) { console.error(e); }
+        };
+
         async function init() {
             try {
                 await signInAnonymously(auth);
@@ -235,7 +264,7 @@
                         renderDashboard(false);
                     }
                 }, (error) => console.error("Snapshot error:", error));
-                setInterval(() => renderDashboard(false), 15000);
+                setInterval(() => renderDashboard(false), 5000);
             } catch (err) { console.error("Firebase Error:", err); }
         }
 
@@ -351,7 +380,7 @@
                     card.setAttribute('data-id', device.id);
                     card.className = `device-card bg-white dark:bg-slate-900 rounded-[2rem] border-2 border-slate-200 dark:border-slate-800 overflow-hidden flex flex-col p-5 md:p-6 relative`;
                     card.innerHTML = `
-                        <div class="status-badge absolute top-4 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full z-10 shadow-sm transition-all duration-300">
+                        <div class="status-badge absolute top-1.5 right-4 flex items-center gap-1.5 px-2.5 py-1 rounded-full z-10 shadow-sm transition-all duration-300">
                             <span class="status-dot w-1.5 h-1.5 rounded-full"></span>
                             <span class="status-text text-[9px] font-bold uppercase tracking-widest"></span>
                         </div>
@@ -380,7 +409,16 @@
                             </div>
                         </div>
                         <div class="space-y-1 mb-6 text-left">
-                            <label class="text-[10px] font-bold text-slate-400 dark:text-slate-50 uppercase tracking-widest px-1">Điều khiển từ xa</label>
+                            <div class="flex items-center justify-between px-1">
+                                <label class="text-[10px] font-bold text-slate-400 dark:text-slate-50 uppercase tracking-widest">Điều khiển từ xa</label>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[8px] font-bold text-slate-400 uppercase">Auto Next YT</span>
+                                    <label class="switch">
+                                        <input type="checkbox" class="auto-click-toggle" onchange="window.toggleAutoClick('${device.id}', this.checked)">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
                             <div class="flex gap-2">
                                 <input type="text" placeholder="Nhập URL..." class="flex-1 text-xs px-3 py-2.5 md:px-4 md:py-3 bg-slate-50 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-2xl outline-none border-2 border-slate-200 dark:border-slate-700 hover:border-indigo-200 focus:border-indigo-400 focus:bg-white dark:focus:bg-slate-800 transition-all shadow-inner" id="input-${device.id}" onkeypress="if(event.key==='Enter') window.handleSend('${device.id}')">
                                 <button onclick="window.handleSend('${device.id}')" class="send-btn w-10 h-10 md:w-11 md:h-11 shrink-0 bg-slate-900 dark:bg-slate-700 text-white flex items-center justify-center rounded-2xl hover:bg-indigo-600 dark:hover:bg-indigo-500 disabled:opacity-20 shadow-lg transition-all" id="btn-${device.id}">
@@ -399,7 +437,7 @@
                             </div>
                             <div class="flex justify-between items-center pt-2">
                                 <button class="delete-device-btn text-[9px] font-bold text-slate-300 dark:text-slate-600 hover:text-rose-500 transition-colors uppercase">Gỡ thiết bị</button>
-                                <span class="text-[8px] text-slate-400 dark:text-slate-600 font-mono tracking-tighter">RAW ID: ${device.id}</span>
+                                <span class="text-[8px] text-slate-400 dark:text-slate-600 font-mono tracking-tighter truncate max-w-[100px]">RAW ID: ${device.id}</span>
                             </div>
                         </div>
                     `;
@@ -419,10 +457,12 @@
                 const nameEl = card.querySelector('.device-name');
                 const tagEl = card.querySelector('.device-tag');
                 const delBtn = card.querySelector('.delete-device-btn');
+                const autoClickToggle = card.querySelector('.auto-click-toggle');
 
                 if (document.activeElement !== nameEl) nameEl.value = device.customName || device.id;
                 if (document.activeElement !== tagEl) tagEl.value = device.deviceTag || "";
                 activeTitleSpan.textContent = device.activeTitle || "Chưa mở trang nào";
+                autoClickToggle.checked = !!device.autoClickYT;
                 
                 if (isOnline && device.videoTime) {
                     videoTimeSpan.textContent = device.videoTime;
