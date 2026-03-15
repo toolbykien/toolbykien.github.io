@@ -41,58 +41,48 @@
 </head>
 <body class="text-white flex items-center justify-center min-h-screen p-4">
 
-    <main class="flex flex-col items-center">
-        <!-- Khung chính với hiệu ứng thủy tinh -->
-        <div class="w-full max-w-md bg-black/30 backdrop-blur-xl rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 border border-white/20">
-            
-            <!-- Tiêu đề -->
-            <div class="text-center">
-                <h1 class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Trình tạo mã 2FA</h1>
-                <p class="text-gray-400 mt-2">Tạo mã TOTP từ khóa bí mật của bạn.</p>
-            </div>
-
-            <!-- Khu vực nhập liệu -->
-            <div class="space-y-4">
-                <div>
-                    <label for="secretKey" class="block mb-2 text-sm font-medium text-gray-300">Nhập mã bí mật (Secret Key)</label>
-                    <div class="relative">
-                        <!-- Icon ổ khóa -->
-                        <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                        </div>
-                        <input type="text" id="secretKey" class="bg-white/10 border border-white/20 text-white placeholder-gray-500 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 pl-10 transition-all duration-300" placeholder="Chỉ chứa A-Z và 2-7" required>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Khu vực hiển thị kết quả -->
-            <div id="output" class="space-y-4 pt-4 text-center hidden">
-                <div class="relative">
-                    <p id="otpCode" class="text-5xl font-mono tracking-widest text-white bg-black/20 rounded-lg py-4 cursor-pointer transition-all duration-300 hover:bg-black/40 hover:scale-105" title="Nhấp để sao chép">
-                        ------
-                    </p>
-                    <span id="copyFeedback" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-semibold text-gray-900 bg-cyan-300 px-4 py-2 rounded-md hidden pointer-events-none shadow-lg">Đã sao chép!</span>
-                </div>
-                <div class="w-full bg-white/10 rounded-full h-2.5">
-                    <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-cyan-500 h-2.5 rounded-full"></div>
-                </div>
-                <p class="text-sm text-gray-400">Mã mới sau <span id="timeLeft" class="font-medium text-white">30</span> giây</p>
-            </div>
-            
-            <p id="errorMessage" class="text-center text-red-400 font-medium h-5"></p>
-            <p class="text-xs text-gray-500 mt-4 text-center">
-                    Create by Kiên Phạm.
-                </p>
+    <!-- Khung chính với hiệu ứng thủy tinh -->
+    <div class="w-full max-w-md bg-black/30 backdrop-blur-xl rounded-2xl shadow-2xl p-6 md:p-8 space-y-6 border border-white/20">
+        
+        <!-- Tiêu đề -->
+        <div class="text-center">
+            <h1 class="text-4xl font-black bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-cyan-400">Trình tạo mã 2FA</h1>
+            <p class="text-gray-400 mt-2">Tạo mã TOTP từ khóa bí mật của bạn.</p>
         </div>
 
-        <!-- Nút Tải Extension -->
-        <a href="/Tool/2FA/2faExt-byKien.zip" target="_blank" rel="noopener noreferrer" class="mt-8 inline-flex items-center justify-center px-6 py-3 border border-transparent text-base font-medium rounded-lg text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 shadow-lg hover:shadow-indigo-500/50 transform hover:-translate-y-1">
-            <svg class="w-5 h-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3" />
-            </svg>
-            <span>Download Extension</span>
-          </a>
-    </main>
+        <!-- Khu vực nhập liệu -->
+        <div class="space-y-4">
+            <div>
+                <label for="secretKey" class="block mb-2 text-sm font-medium text-gray-300">Nhập mã bí mật (Secret Key)</label>
+                <div class="relative">
+                    <!-- Icon ổ khóa -->
+                    <div class="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
+                        <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    </div>
+                    <input type="text" id="secretKey" class="bg-white/10 border border-white/20 text-white placeholder-gray-500 text-sm rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 block w-full p-2.5 pl-10 transition-all duration-300" placeholder="Chỉ chứa A-Z và 2-7" required>
+                </div>
+            </div>
+        </div>
+
+        <!-- Khu vực hiển thị kết quả -->
+        <div id="output" class="space-y-4 pt-4 text-center hidden">
+            <div class="relative">
+                <p id="otpCode" class="text-5xl font-mono tracking-widest text-white bg-black/20 rounded-lg py-4 cursor-pointer transition-all duration-300 hover:bg-black/40 hover:scale-105" title="Nhấp để sao chép">
+                    ------
+                </p>
+                <span id="copyFeedback" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-lg font-semibold text-gray-900 bg-cyan-300 px-4 py-2 rounded-md hidden pointer-events-none shadow-lg">Đã sao chép!</span>
+            </div>
+            <div class="w-full bg-white/10 rounded-full h-2.5">
+                <div id="progressBar" class="bg-gradient-to-r from-indigo-500 to-cyan-500 h-2.5 rounded-full"></div>
+            </div>
+            <p class="text-sm text-gray-400">Mã mới sau <span id="timeLeft" class="font-medium text-white">30</span> giây</p>
+        </div>
+        
+        <p id="errorMessage" class="text-center text-red-400 font-medium h-5"></p>
+        <p class="text-xs text-gray-500 mt-4 text-center">
+                Create by Kiên Phạm.
+            </p>
+    </div>
 
     <script>
         // Lấy các phần tử HTML cần dùng
@@ -190,5 +180,7 @@
     </script>
 </body>
 </html>
+
+
 
 
